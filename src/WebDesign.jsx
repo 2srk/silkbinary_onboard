@@ -1,3 +1,4 @@
+// WebDesign.jsx - Updated with Hosting.jsx pattern
 import React, { useState, useEffect } from 'react';
 import {
     Layout, ArrowRight, Loader2, CheckCircle2, Check, User, Phone, Mail,
@@ -226,6 +227,7 @@ export default function WebDesign({ currency }) {
             setStep(2); // skip plan step
         }
     }, []);
+
     // Save state to localStorage
     useEffect(() => {
         if (selectedPlan) {
@@ -320,6 +322,16 @@ export default function WebDesign({ currency }) {
         setStep(prev => prev - 1);
     };
 
+    const calculateTotal = () => {
+        if (!selectedPlan) return 0;
+
+        // For web design, total is just the plan price
+        // Advanced plan is custom quote (0)
+        if (selectedPlan === 'advanced') return 0;
+
+        return currency === 'INR' ? PLANS[selectedPlan].priceInr : PLANS[selectedPlan].priceUsd;
+    };
+
     const handleCheckout = async () => {
         if (!validateStep(5)) {
             setStep(5);
@@ -330,15 +342,30 @@ export default function WebDesign({ currency }) {
         setCheckoutError(null);
         setDeployLogs(["Initializing project payload...", "Securing connection to backend..."]);
 
+        // Determine plan key
+        let planKey = null;
+        if (selectedPlan === 'starter') planKey = 'starter';
+        else if (selectedPlan === 'professional') planKey = 'professional';
+        else if (selectedPlan === 'advanced') planKey = 'advanced';
+
         const payload = {
-            selectedPlan,
+            plan: {
+                name: PLANS[selectedPlan].name,
+                key: planKey,
+                features: PLANS[selectedPlan].features,
+                pages: PLANS[selectedPlan].pages,
+                delivery: PLANS[selectedPlan].delivery
+            },
             project: {
                 name: project.name,
                 industry: project.industry,
                 features: project.features,
                 description: project.description
             },
-            theme,
+            design: {
+                theme: theme,
+                themeName: THEMES.find(t => t.id === theme)?.name
+            },
             hosting: {
                 optIn: hosting.optIn,
                 location: hosting.location
@@ -349,8 +376,10 @@ export default function WebDesign({ currency }) {
                 phone: isLogin ? undefined : account.phone,
                 password: account.password
             },
-            currency,
-            isLogin
+            currency: currency,
+            totalAmount: calculateTotal(),
+            isLogin: isLogin,
+            isCustomQuote: selectedPlan === 'advanced'
         };
 
         try {
@@ -365,6 +394,7 @@ export default function WebDesign({ currency }) {
             });
 
             const data = await res.json();
+            console.log('[WebDesign] Backend response:', data);
 
             if (!res.ok) {
                 if (data.code === 'INVALID_CREDENTIALS') {
@@ -382,10 +412,28 @@ export default function WebDesign({ currency }) {
 
             setDeployLogs(prev => [...prev, "Payload accepted by server..."]);
 
+            // 🔥 IMPORTANT: Store order data in localStorage BEFORE redirect
+            if (data.orderId) {
+                const pendingOrder = {
+                    orderId: data.orderId,
+                    plan: selectedPlan,
+                    projectName: project.name,
+                    amount: calculateTotal(),
+                    currency: currency,
+                    timestamp: Date.now(),
+                    checkoutUrl: data.checkoutUrl || data.redirect_url,
+                    isCustomQuote: selectedPlan === 'advanced'
+                };
+
+                localStorage.setItem('pendingOrder', JSON.stringify(pendingOrder));
+                console.log('[WebDesign] Order saved to localStorage:', pendingOrder);
+            }
+
             // Clear saved state after successful order
             localStorage.removeItem('webdesignCheckout');
 
-            if (data.isCustomQuote) {
+            // Handle custom quote (no payment)
+            if (selectedPlan === 'advanced' || data.isCustomQuote) {
                 setDeployLogs(prev => [
                     ...prev,
                     "✅ SUCCESS: Requirements logged securely.",
@@ -395,7 +443,21 @@ export default function WebDesign({ currency }) {
                 setTimeout(() => {
                     window.location.href = `/quote-requested?orderId=${data.orderId}`;
                 }, 2000);
-            } else if (data.redirect_url) {
+            }
+            // Handle payment flow
+            else if (data.checkoutUrl) {
+                setDeployLogs(prev => [
+                    ...prev,
+                    "✅ SUCCESS: Payload accepted.",
+                    "💰 Generating invoice...",
+                    "↪️ Redirecting to secure payment gateway..."
+                ]);
+                setTimeout(() => {
+                    window.location.href = data.checkoutUrl;
+                }, 2000);
+            }
+            // Fallback for backward compatibility
+            else if (data.redirect_url) {
                 setDeployLogs(prev => [
                     ...prev,
                     "✅ SUCCESS: Payload accepted.",
@@ -405,7 +467,8 @@ export default function WebDesign({ currency }) {
                 setTimeout(() => {
                     window.location.href = data.redirect_url;
                 }, 2000);
-            } else if (data.orderId) {
+            }
+            else if (data.orderId) {
                 setDeployLogs(prev => [...prev, "✅ Order created successfully!", "↪️ Redirecting to confirmation..."]);
                 setTimeout(() => {
                     window.location.href = `/payment/success?orderId=${data.orderId}`;
@@ -726,7 +789,6 @@ export default function WebDesign({ currency }) {
                                         {isLogin ? 'Log in to securely link your project request.' : 'Owner details for client portal access.'}
                                     </p>
                                 </div>
-
 
                                 <div className="flex items-center gap-4 mb-8">
                                     <div className="flex-1 h-[2px] bg-gray-100"></div>
