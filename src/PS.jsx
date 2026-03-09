@@ -35,6 +35,8 @@ const PaymentStatus = () => {
         const maxPolls = 40; // 40 * 3 seconds = 2 minutes max
         const pollInterval = 3000; // 3 seconds
 
+// In PS.jsx - Fix the checkStatus function structure
+
         const checkStatus = async () => {
             try {
                 pollCount++;
@@ -58,12 +60,13 @@ const PaymentStatus = () => {
                 setPaymentDetails(data);
 
                 // Handle different statuses
-                if (data.status === 'processing' || data.status === 'paid') {
+                if (data.status === 'processing' || data.status === 'paid' || data.status === 'completed') {
                     // Payment successful
                     setStatus('success');
                     localStorage.removeItem('pendingOrder');
                     clearInterval(interval);
 
+                    // Auto-redirect after 3 seconds
                     setTimeout(() => {
                         navigate(`/payment/success?orderId=${currentOrderId}`);
                     }, 3000);
@@ -79,11 +82,8 @@ const PaymentStatus = () => {
                     setStatus('pending');
                 }
 
-                } else if (pollCount >= maxPolls) {
-                    // Timeout after max polls
-                    setStatus('timeout');
-                    clearInterval(interval);
-                }
+                // ⚠️ IMPORTANT: This else if was outside the try/catch block!
+                // Move it inside the try block
 
             } catch (err) {
                 console.error('[PaymentStatus] Status check error:', err);
