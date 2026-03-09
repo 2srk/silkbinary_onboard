@@ -543,6 +543,9 @@ export default function Hosting({ currency }) {
 
             const data = await res.json();
 
+            // DEBUG: See what the backend returns
+            console.log('Backend response:', data);
+
             if (!res.ok) {
                 // Handle specific error codes
                 if (data.code === 'INVALID_CREDENTIALS') {
@@ -563,17 +566,28 @@ export default function Hosting({ currency }) {
             // Clear saved state after successful order
             localStorage.removeItem('hostingCheckout');
 
-            if (data.redirect_url) {
+            // Check for checkoutUrl first (new backend response)
+            if (data.checkoutUrl) {
+                setDeployLogs(prev => [...prev, "Redirecting to secure payment gateway..."]);
+                console.log('Redirecting to PhonePe:', data.checkoutUrl); // Debug log
+                setTimeout(() => {
+                    window.location.href = data.checkoutUrl; // This will be the PhonePe URL
+                }, 800);
+            }
+            // Fallback for backward compatibility
+            else if (data.redirect_url) {
                 setDeployLogs(prev => [...prev, "Redirecting to secure checkout..."]);
                 setTimeout(() => {
                     window.location.href = data.redirect_url;
                 }, 800);
-            } else if (data.orderId) {
+            }
+            else if (data.orderId) {
                 setDeployLogs(prev => [...prev, "Order created successfully!", "Redirecting to order confirmation..."]);
                 setTimeout(() => {
                     window.location.href = `/payment/success?orderId=${data.orderId}`;
                 }, 800);
-            } else {
+            }
+            else {
                 throw new Error("No redirect URL provided by the server.");
             }
 
