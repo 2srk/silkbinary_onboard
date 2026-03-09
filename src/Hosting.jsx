@@ -61,6 +61,46 @@ const CONTROL_PANELS = {
     cpanel: { label: "cPanel", allowed: ["essential", "pro"] },
 };
 
+// Add this helper function before the Hosting component
+const formatDomainInput = (input) => {
+    // Remove protocol and www
+    let cleaned = input.toLowerCase().trim()
+        .replace(/^(https?:\/\/)?(www\.)?/, '')
+        .split('/')[0]
+        .split('?')[0]
+        .split('#')[0];
+
+    // Remove any invalid characters
+    cleaned = cleaned.replace(/[^a-z0-9.-]/g, '');
+
+    // Remove multiple consecutive dots
+    cleaned = cleaned.replace(/\.{2,}/g, '.');
+
+    // Remove leading/trailing dots and hyphens
+    cleaned = cleaned.replace(/^[.-]+|[.-]+$/g, '');
+
+    return cleaned;
+};
+// Allowed TLDs for display
+const ALLOWED_TLDS = [
+    '.com', '.net', '.org', '.in', '.co.in', '.org.in', '.firm.in', '.gen.in', '.ind.in'
+];
+const isValidTLD = (domain) => {
+    const parts = domain.split('.');
+    if (parts.length < 2) return false;
+
+    // Check for multi-part TLDs (co.in, org.in, etc.)
+    const possibleTld = parts.slice(1).join('.');
+    const multiPartTlds = ['co.in', 'org.in', 'firm.in', 'gen.in', 'ind.in'];
+
+    if (multiPartTlds.includes(possibleTld)) {
+        return ALLOWED_TLDS.includes(`.${possibleTld}`);
+    }
+
+    // Single TLD
+    const tld = parts.pop();
+    return ALLOWED_TLDS.includes(`.${tld}`);
+};
 // Validation functions
 const isValidEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -284,8 +324,33 @@ export default function Hosting({ currency }) {
         e.preventDefault();
         if (!domainQuery.trim()) return;
 
+        // Format the domain input
+        const formattedDomain = formatDomainInput(domainQuery);
+
+        // STRICT VALIDATION - Check domain format before sending to API
+        const domainRegex = /^(?!-)[a-z0-9-]{1,63}(?<!-)(\.[a-z]{2,})+$/;
+        const hasValidFormat = domainRegex.test(formattedDomain);
+
+        if (!hasValidFormat) {
+            setCheckoutError('Please enter a valid domain name (e.g., example.com)');
+            return;
+        }
+
+        // Check if domain has a valid TLD from allowed list
+        const tld = formattedDomain.split('.').slice(1).join('.');
+        if (!ALLOWED_TLDS.map(t => t.substring(1)).includes(tld)) {
+            setCheckoutError(`TLD .${tld} is not supported. Allowed TLDs: ${ALLOWED_TLDS.join(', ')}`);
+            return;
+        }
+
+        // Basic validation before sending to backend
+        if (formattedDomain.length < 3) {
+            setCheckoutError('Domain name must be at least 3 characters');
+            return;
+        }
+
         if (domainMode === 'existing') {
-            setSelectedDomain(domainQuery);
+            setSelectedDomain(formattedDomain);
             nextStep();
             return;
         }
@@ -297,11 +362,12 @@ export default function Hosting({ currency }) {
         if (domainMode === 'transfer') {
             setTimeout(() => {
                 setDomainResult({
-                    domain: domainQuery,
+                    domain: formattedDomain,
                     available: true,
                     price: currency === 'INR' ? 899 : 10.99,
                     type: 'transfer',
-                    premium: false
+                    premium: false,
+                    validation: { tld: formattedDomain.split('.').pop() }
                 });
                 setIsSearching(false);
             }, 800);
@@ -309,9 +375,8 @@ export default function Hosting({ currency }) {
         }
 
         try {
-            // Add timeout to fetch
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
 
             const res = await fetch('https://sbinapi.plak.in/api/domain/search', {
                 method: 'POST',
@@ -319,7 +384,7 @@ export default function Hosting({ currency }) {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({ domain: domainQuery }),
+                body: JSON.stringify({ domain: formattedDomain }),
                 signal: controller.signal,
                 mode: 'cors',
                 credentials: 'include'
@@ -328,15 +393,30 @@ export default function Hosting({ currency }) {
             clearTimeout(timeoutId);
 
             if (!res.ok) {
+                // Handle 400 errors specifically
+                if (res.status === 400) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Invalid domain format. Please check and try again.');
+                }
                 const errorData = await res.json().catch(() => ({}));
                 throw new Error(errorData.error || `HTTP error ${res.status}`);
             }
 
             const data = await res.json();
 
+            // Check if domain validation failed
+            if (data.source === 'validation' && data.error) {
+                setCheckoutError(data.errorMessage);
+                setDomainResult(null);
+                setIsSearching(false);
+                return;
+            }
+
+            // Convert price if needed
             if (currency === 'INR' && data.available && data.price) {
                 data.price = (parseFloat(data.price) * exchangeRate).toFixed(2);
             }
+
             setDomainResult(data);
         } catch (err) {
             console.error('Domain search error:', err);
@@ -345,25 +425,14 @@ export default function Hosting({ currency }) {
             if (err.name === 'AbortError') {
                 errorMessage += 'Request timeout. Please try again.';
             } else if (err.message.includes('Failed to fetch')) {
-                errorMessage += 'Cannot connect to server. Please ensure backend is running on port 8000.';
+                errorMessage += 'Cannot connect to server.';
+            } else if (err.message.includes('400')) {
+                errorMessage += 'Invalid domain format. Please use a valid domain (e.g., example.com)';
             } else {
                 errorMessage += err.message;
             }
 
             setCheckoutError(errorMessage);
-
-            // Fallback to mock data for development
-            if (process.env.NODE_ENV === 'development') {
-                console.log('Using fallback mock data');
-                const isAvailable = domainQuery.length % 2 !== 0;
-                const isPremium = domainQuery.length > 10;
-                setDomainResult({
-                    domain: domainQuery.toLowerCase() + (domainQuery.includes('.') ? '' : '.com'),
-                    available: isAvailable,
-                    price: isAvailable ? (currency === 'INR' ? 1078 : 12.99) : null,
-                    premium: isPremium
-                });
-            }
         } finally {
             setIsSearching(false);
         }
@@ -744,7 +813,7 @@ export default function Hosting({ currency }) {
                                     <p className="text-gray-500 font-mono text-sm">Select a primary domain for your new <span className="font-bold text-black">{PLANS[selectedPlan]?.name}</span> environment.</p>
                                     {selectedPlan !== 'starter' && (
                                         <p className="text-xs text-green-600 mt-2 font-mono animate-pulse">
-                                            ✨ Free domain included with non-premium domains!
+                                            ✨ Free domain with Selected Tlds!
                                         </p>
                                     )}
                                     {validationErrors.domain && (
@@ -787,31 +856,95 @@ export default function Hosting({ currency }) {
                                 </div>
 
                                 <form onSubmit={handleDomainSubmit} className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <Globe className="h-5 w-5 text-gray-400 group-focus-within:text-black transition-colors" />
+                                    <div
+                                        className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <Globe
+                                            className="h-5 w-5 text-gray-400 group-focus-within:text-black transition-colors"/>
                                     </div>
                                     <input
                                         type="text"
                                         required
                                         value={domainQuery}
-                                        onChange={(e) => setDomainQuery(e.target.value)}
-                                        placeholder={domainMode === 'register' ? "example.com" : "your-domain.com"}
-                                        className="w-full pl-12 pr-32 py-5 bg-gray-50 border-2 border-gray-200 text-lg font-mono placeholder-gray-400 focus:outline-none focus:border-black focus:bg-white transition-all rounded-none"
+                                        onChange={(e) => {
+                                            const value = e.target.value.toLowerCase().replace(/[^a-z0-9.-]/g, '');
+                                            setDomainQuery(value);
+                                        }}
+                                        placeholder={domainMode === 'register' ? "yourdomain (e.g., example)" : "your-domain.com"}
+                                        className={`w-full pl-12 pr-32 py-5 bg-gray-50 border-2 text-lg font-mono placeholder-gray-400 focus:outline-none focus:border-black focus:bg-white transition-all rounded-none ${
+                                            checkoutError && checkoutError.includes('domain') ? 'border-red-500' : 'border-gray-200'
+                                        }`}
                                         disabled={isSearching}
+                                        maxLength={63}
                                     />
                                     <button
                                         type="submit"
                                         disabled={isSearching || !domainQuery.trim()}
                                         className="absolute right-2 top-2 bottom-2 bg-black hover:bg-gray-800 text-white px-6 font-mono text-sm uppercase tracking-wider disabled:opacity-50 transition-colors rounded-none flex items-center gap-2"
                                     >
-                                        {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> :
+                                        {isSearching ? <Loader2 className="w-4 h-4 animate-spin"/> :
                                             domainMode === 'existing' ? 'Continue' : 'Check'}
                                     </button>
                                 </form>
+                                {domainQuery && domainMode === 'register' && (
+                                    <div className="mt-2 text-xs font-mono">
+                                        {(() => {
+                                            const testDomain = formatDomainInput(domainQuery);
+                                            const hasDot = testDomain.includes('.');
+                                            const isValidLength = testDomain.replace(/\./g, '').length >= 3;
+                                            const validChars = /^[a-z0-9.-]+$/.test(testDomain);
+
+                                            if (!testDomain) return null;
+
+                                            return (
+                                                <div className="space-y-1">
+                                                    {!validChars && (
+                                                        <p className="text-amber-600">⚠ Only letters, numbers, dots, and hyphens allowed</p>
+                                                    )}
+                                                    {!isValidLength && (
+                                                        <p className="text-amber-600">⚠ Domain must be at least 3 characters</p>
+                                                    )}
+                                                    {validChars && isValidLength && !hasDot && (
+                                                        <p className="text-gray-500">ℹ No TLD specified - will default to .com</p>
+                                                    )}
+                                                    {validChars && isValidLength && hasDot && isValidTLD(testDomain) && (
+                                                        <p className="text-green-600">✓ Valid domain format</p>
+                                                    )}
+                                                    {hasDot && !isValidTLD(testDomain) && (
+                                                        <p className="text-red-600">✗ Unsupported TLD. Allowed: {ALLOWED_TLDS.join(', ')}</p>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+                                {/* Add TLD suggestions */}
+                                {domainMode === 'register' && !isSearching && !domainResult && (
+                                    <div className="mt-4">
+                                        <p className="text-xs font-mono text-gray-500 mb-2">Popular TLDs:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {ALLOWED_TLDS.map(tld => (
+                                                <button
+                                                    key={tld}
+                                                    onClick={() => {
+                                                        const base = domainQuery.replace(/\.[^.]*$/, '');
+                                                        if (base) {
+                                                            setDomainQuery(base + tld);
+                                                        } else {
+                                                            setDomainQuery(tld.substring(1));
+                                                        }
+                                                    }}
+                                                    className="text-xs px-3 py-1 border border-gray-200 hover:border-black font-mono transition-colors"
+                                                >
+                                                    {tld}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {isSearching && <DomainSkeleton />}
 
-
+                                {/* Domain Result Section */}
                                 {domainResult && domainMode !== 'existing' && (
                                     <div className="mt-6 border border-gray-200 bg-white shadow-sm animate-slide-left">
                                         <div className="p-5">
@@ -831,14 +964,14 @@ export default function Hosting({ currency }) {
                                                 </div>
                                             )}
 
-                                            {/* Success State with DNS source indicator */}
+                                            {/* DNS Source State */}
                                             {!domainResult.error && domainResult.source === 'dns' && (
                                                 <div className="flex items-start gap-4">
                                                     <StatusDot available={false} loading={false} />
                                                     <div className="flex-1">
                                                         <h3 className="font-bold text-lg">{domainResult.domain}</h3>
                                                         <p className="text-xs font-mono text-gray-500 mt-1">
-                                                            Unavailable (DNS records found)
+                                                            Unavailable (Already Registered)
                                                         </p>
                                                         <p className="text-[10px] text-gray-400 mt-1">
                                                             ✓ Verified via DNS
@@ -850,7 +983,7 @@ export default function Hosting({ currency }) {
                                                 </div>
                                             )}
 
-                                            {/* Success State with API source */}
+                                            {/* API Source State */}
                                             {!domainResult.error && domainResult.source === 'api' && (
                                                 <div className="flex items-center justify-between flex-wrap gap-4">
                                                     <div className="flex items-center gap-4">
@@ -860,6 +993,12 @@ export default function Hosting({ currency }) {
                                                             <p className="text-xs font-mono text-gray-500 mt-1 uppercase">
                                                                 {domainResult.available ? 'Available' : 'Registered'}
                                                             </p>
+                                                            {/* Show TLD info if available */}
+                                                            {domainResult.validation && (
+                                                                <p className="text-[10px] text-gray-400 font-mono mt-1">
+                                                                    TLD: .{domainResult.validation.tld}
+                                                                </p>
+                                                            )}
                                                             {domainResult.premium && domainResult.available && (
                                                                 <p className="text-[10px] text-amber-600 font-mono mt-1 flex items-center gap-1">
                                                                     <Star className="w-3 h-3" /> Premium domain
@@ -870,9 +1009,42 @@ export default function Hosting({ currency }) {
 
                                                     {domainResult.available ? (
                                                         <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
-                            <span className="font-mono font-bold text-lg">
-                                {currency === 'INR' ? '₹' : '$'}{domainResult.price}
-                            </span>
+                                                            <span className="font-mono font-bold text-lg">
+                                                                {currency === 'INR' ? '₹' : '$'}{domainResult.price}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => { setSelectedDomain(domainResult.domain); nextStep(); }}
+                                                                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 font-mono text-sm uppercase tracking-widest transition-colors"
+                                                            >
+                                                                Select
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <button disabled className="bg-gray-100 text-gray-400 border border-gray-200 px-6 py-2.5 font-mono text-sm uppercase tracking-widest cursor-not-allowed">
+                                                            Unavailable
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Fallback for other sources */}
+                                            {!domainResult.error && !domainResult.source && (
+                                                <div className="flex items-center justify-between flex-wrap gap-4">
+                                                    <div className="flex items-center gap-4">
+                                                        <StatusDot available={domainResult.available} loading={false} />
+                                                        <div>
+                                                            <h3 className="font-bold text-lg">{domainResult.domain}</h3>
+                                                            <p className="text-xs font-mono text-gray-500 mt-1 uppercase">
+                                                                {domainResult.available ? 'Available' : 'Registered'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {domainResult.available ? (
+                                                        <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                                                            <span className="font-mono font-bold text-lg">
+                                                                {currency === 'INR' ? '₹' : '$'}{domainResult.price}
+                                                            </span>
                                                             <button
                                                                 onClick={() => { setSelectedDomain(domainResult.domain); nextStep(); }}
                                                                 className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 font-mono text-sm uppercase tracking-widest transition-colors"
@@ -912,8 +1084,6 @@ export default function Hosting({ currency }) {
                                         {isLogin ? 'Log in to your account to complete your order.' : 'Owner details for this infrastructure.'}
                                     </p>
                                 </div>
-
-
 
                                 <div className="flex items-center gap-4 mb-8">
                                     <div className="flex-1 h-[2px] bg-gray-100"></div>
