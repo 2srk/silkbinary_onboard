@@ -485,6 +485,8 @@ export default function Hosting({ currency }) {
         );
     };
 
+// In hosting.jsx - Update the handleCheckout function
+
     const handleCheckout = async () => {
         if (!validateStep(3)) {
             setStep(3);
@@ -563,13 +565,31 @@ export default function Hosting({ currency }) {
 
             setDeployLogs(prev => [...prev, "Payload submitted successfully.", "Fetching payment gateway URL..."]);
 
+            // 🔥 IMPORTANT: Store order data in localStorage BEFORE redirect
+            if (data.orderId) {
+                const pendingOrder = {
+                    orderId: data.orderId,
+                    plan: selectedPlan,
+                    domain: selectedDomain,
+                    amount: calculateTotal(),
+                    currency: currency,
+                    timestamp: Date.now(),
+                    checkoutUrl: data.checkoutUrl || data.redirect_url
+                };
+
+                localStorage.setItem('pendingOrder', JSON.stringify(pendingOrder));
+                console.log('[Hosting] Order saved to localStorage:', pendingOrder);
+            }
+
             // Clear saved state after successful order
             localStorage.removeItem('hostingCheckout');
 
             // Check for checkoutUrl first (new backend response)
             if (data.checkoutUrl) {
                 setDeployLogs(prev => [...prev, "Redirecting to secure payment gateway..."]);
-                console.log('Redirecting to PhonePe:', data.checkoutUrl); // Debug log
+                console.log('Redirecting to PhonePe:', data.checkoutUrl);
+
+                // Small delay to ensure localStorage is written
                 setTimeout(() => {
                     window.location.href = data.checkoutUrl; // This will be the PhonePe URL
                 }, 800);

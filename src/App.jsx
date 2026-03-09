@@ -6,6 +6,8 @@ import Hosting from './Hosting';
 import VPS from './vps';
 import Dedicated from './dedicated';
 import PaymentSuccess from './PaymentSuccess';
+import PaymentStatus from './PS.jsx';
+
 
 // Custom Styles Injection (shared across all services)
 export const CustomStyles = () => (
@@ -300,7 +302,12 @@ function App() {
                             <UnavailablePage service="Dedicated Servers" />
                         </>
                     } />
-
+                    <Route path="/payment/status" element={
+                        <>
+                            <Header currency={currency} setCurrency={setCurrency} />
+                            <PaymentStatus />
+                        </>
+                    } />
                     {/* Payment routes */}
                     <Route path="/payment/success" element={
                         <>
