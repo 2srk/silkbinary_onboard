@@ -64,21 +64,15 @@ export default function PaymentSuccess() {
                 )}
 
                 <p className="text-sm text-gray-500 mb-8">
-                    Your service is now being provisioned. You'll receive an email with login details shortly.
+                    You Order has been Regsistered. You Will Recive an Email with Invoice and Account/Service Details.
                 </p>
 
                 <div className="space-y-3">
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate('https://dash.silkbinary.com/')}
                         className="bg-black text-white px-8 py-4 font-mono text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors w-full"
                     >
-                        Return to Home
-                    </button>
-                    <button
-                        onClick={() => navigate('/hosting')}
-                        className="border-2 border-gray-200 text-gray-700 px-8 py-4 font-mono text-sm uppercase tracking-widest hover:border-black transition-colors w-full"
-                    >
-                        Order Another Service
+                        Log in To Dashboard
                     </button>
                 </div>
             </div>
