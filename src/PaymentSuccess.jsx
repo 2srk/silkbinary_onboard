@@ -13,7 +13,7 @@ export default function PaymentSuccess() {
         // Fetch order details from backend
         const fetchOrderDetails = async () => {
             try {
-                const res = await fetch(`https://sbinapi.plak.in/api/order/${orderId}`);
+                const res = await fetch(`https://api.silkbinary.com/api/order/${orderId}`);
                 if (res.ok) {
                     const data = await res.json();
                     setOrderDetails(data);

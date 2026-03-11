@@ -378,7 +378,7 @@ export default function Hosting({ currency }) {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-            const res = await fetch('https://sbinapi.plak.in/api/domain/search', {
+            const res = await fetch('https://api.silkbinary.com/api/domain/search', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -535,7 +535,7 @@ export default function Hosting({ currency }) {
         try {
             setDeployLogs(prev => [...prev, "Submitting order to provisioning system..."]);
 
-            const res = await fetch('https://sbinapi.plak.in/api/onboarding/hosting', {
+            const res = await fetch('https://api.silkbinary.com/api/onboarding/hosting', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

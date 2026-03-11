@@ -385,7 +385,7 @@ export default function WebDesign({ currency }) {
         try {
             setDeployLogs(prev => [...prev, "Submitting to SilkBinary API..."]);
 
-            const res = await fetch('https://sbinapi.plak.in/api/onboarding/webdesign', {
+            const res = await fetch('https://api.silkbinary.com/api/onboarding/webdesign', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

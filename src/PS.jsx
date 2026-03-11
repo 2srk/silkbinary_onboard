@@ -42,7 +42,7 @@ const PaymentStatus = () => {
                 pollCount++;
                 console.log(`[PaymentStatus] Poll #${pollCount} for order: ${currentOrderId}`);
 
-                const res = await fetch(`https://sbinapi.plak.in/api/payment/status/${currentOrderId}`, {
+                const res = await fetch(`https://api.silkbinary.com/api/payment/status/${currentOrderId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
