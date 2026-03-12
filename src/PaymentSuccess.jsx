@@ -69,7 +69,7 @@ export default function PaymentSuccess() {
 
                 <div className="space-y-3">
                     <button
-                        onClick={() => navigate('https://dash.silkbinary.com/')}
+                        onClick={() => window.location.href = "https://dash.silkbinary.com/"}
                         className="bg-black text-white px-8 py-4 font-mono text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors w-full"
                     >
                         Log in To Dashboard
