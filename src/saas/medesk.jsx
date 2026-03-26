@@ -207,11 +207,11 @@ export default function MedeskOnboarding() {
     const [doctorFiles, setDoctorFiles] = useState({});
     const [businessProofFile, setBusinessProofFile] = useState(null);
     const [clinicProofFile, setClinicProofFile] = useState(null);
-    const [password, setPassword] = useState('');
+    const [accountName, setAccountName] = useState('');
+    const [accountPassword, setAccountPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [accountName, setAccountName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [errors, setErrors] = useState({});
@@ -330,14 +330,14 @@ export default function MedeskOnboarding() {
         }
         else if (currentStep === 6) {
             if (!accountName?.trim()) newErrors.accountName = 'Full name is required';
-            if (!password) newErrors.password = 'Password is required';
-            else if (password.length < 8) newErrors.password = 'Password must be at least 8 characters';
-            if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+            if (!accountPassword) newErrors.accountPassword = 'Password is required';
+            else if (accountPassword.length < 8) newErrors.accountPassword = 'Password must be at least 8 characters';
+            if (accountPassword !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    }, [currentStep, selectedPlanKey, formData, doctorFiles, businessProofFile, clinicProofFile, password, confirmPassword, accountName]);
+    }, [currentStep, selectedPlanKey, formData, doctorFiles, businessProofFile, clinicProofFile, accountPassword, confirmPassword, accountName]);
 
     const nextStep = () => {
         if (validateStep()) {
@@ -362,8 +362,8 @@ export default function MedeskOnboarding() {
         fd.append('businessAddress', formData.businessAddress);
         fd.append('businessProofType', formData.businessProofType);
         fd.append('clinicProofType', formData.clinicProofType);
-        fd.append('account[name]', accountName);
-        fd.append('account[password]', password);
+        fd.append('accountName', accountName);
+        fd.append('password', accountPassword);
         fd.append('isLogin', 'false');
 
         if (businessProofFile) fd.append('businessProofFile', businessProofFile);
@@ -458,7 +458,7 @@ export default function MedeskOnboarding() {
         </div>
     );
 
-    // Clinic info render (same as before, keep existing)
+    // Clinic info render
     const renderClinicInfo = () => (
         <div className="max-w-2xl mx-auto">
             <div className="mb-10 text-center">
@@ -494,7 +494,7 @@ export default function MedeskOnboarding() {
         </div>
     );
 
-    // Doctors render (keep existing, omitted for brevity but include in final)
+    // Doctors render
     const renderDoctors = () => (
         <div className="max-w-3xl mx-auto">
             <div className="mb-10 text-center">
@@ -536,7 +536,7 @@ export default function MedeskOnboarding() {
         </div>
     );
 
-    // Business render (keep existing, omitted for brevity but include in final)
+    // Business render
     const renderBusiness = () => (
         <div className="max-w-2xl mx-auto">
             <div className="mb-10 text-center"><h1 className="text-4xl font-black uppercase tracking-tight mb-2">Business Information</h1><p className="text-gray-500 font-mono text-sm">Legal details for verification</p></div>
@@ -554,7 +554,7 @@ export default function MedeskOnboarding() {
         </div>
     );
 
-    // Clinic proof render (keep existing)
+    // Clinic proof render
     const renderClinicProof = () => (
         <div className="max-w-2xl mx-auto">
             <div className="mb-10 text-center"><h1 className="text-4xl font-black uppercase tracking-tight mb-2">Medical Clinic Proof</h1><p className="text-gray-500 font-mono text-sm">Verify your clinic's existence</p></div>
@@ -664,10 +664,10 @@ export default function MedeskOnboarding() {
                             <div>
                                 <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Password <span className="text-red-500">*</span></label>
                                 <div className="relative">
-                                    <input type={showPassword ? "text" : "password"} className={`w-full p-4 bg-gray-50 border-2 ${errors.password ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono pr-12`} value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a strong password" />
+                                    <input type={showPassword ? "text" : "password"} className={`w-full p-4 bg-gray-50 border-2 ${errors.accountPassword ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono pr-12`} value={accountPassword} onChange={e => setAccountPassword(e.target.value)} placeholder="Create a strong password" />
                                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
                                 </div>
-                                {errors.password && <p className="text-red-500 text-xs font-mono mt-1">{errors.password}</p>}
+                                {errors.accountPassword && <p className="text-red-500 text-xs font-mono mt-1">{errors.accountPassword}</p>}
                             </div>
                             <div>
                                 <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Confirm Password <span className="text-red-500">*</span></label>
