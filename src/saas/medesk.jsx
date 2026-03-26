@@ -402,17 +402,13 @@ export default function MedeskOnboarding() {
     };
 
     const handleSubmit = async () => {
-        if (!validateStep()) {
-            console.log('[Medesk] Validation failed');
-            return;
-        }
+        if (!validateStep()) return;
 
         setIsSubmitting(true);
         setServerMessage(null);
 
         try {
             const payload = prepareFormDataForApi();
-
             const response = await fetch(ONBOARDING_CONFIG.post_submission.api_endpoint, {
                 method: 'POST',
                 body: payload,
@@ -421,6 +417,23 @@ export default function MedeskOnboarding() {
             const data = await response.json();
 
             if (response.ok) {
+                // ✅ STORE ORDER IN LOCALSTORAGE (like hosting/webdesign)
+                if (data.orderId) {
+                    const pendingOrder = {
+                        orderId: data.orderId,
+                        plan: selectedPlanKey,
+                        clinicName: formData.clinicName,
+                        amount: planPrice,
+                        currency: 'INR',
+                        timestamp: Date.now(),
+                        checkoutUrl: data.checkoutUrl || data.redirect_url,
+                        service_type: 'medesk'
+                    };
+                    localStorage.setItem('pendingOrder', JSON.stringify(pendingOrder));
+                    console.log('[Medesk] Order saved to localStorage:', pendingOrder);
+                }
+
+                // CHECK FOR PAYMENT REDIRECT URL
                 if (data.checkoutUrl) {
                     console.log('[Medesk] Redirecting to payment:', data.checkoutUrl);
                     window.location.href = data.checkoutUrl;
