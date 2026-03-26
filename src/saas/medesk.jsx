@@ -96,7 +96,7 @@ const formatBytes = (bytes) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-// File Upload Component with size restriction display
+// File Upload Component
 const FileUpload = ({ label, file, onFileChange, error, helpText, accept = ".pdf,.jpg,.jpeg,.png", required, maxSize = 10 }) => {
     const inputRef = useRef(null);
     const maxSizeBytes = maxSize * 1024 * 1024;
@@ -363,6 +363,8 @@ export default function MedeskOnboarding() {
 
     const prepareFormDataForApi = () => {
         const fd = new FormData();
+
+        // Basic fields
         fd.append('plan', selectedPlanKey);
         fd.append('clinicName', formData.clinicName);
         fd.append('clinicType', formData.clinicType === 'Other' ? formData.otherClinicType : formData.clinicType);
@@ -380,15 +382,24 @@ export default function MedeskOnboarding() {
         if (businessProofFile) fd.append('businessProofFile', businessProofFile);
         if (clinicProofFile) fd.append('clinicProofFile', clinicProofFile);
 
-        // Add doctors as individual fields (not JSON)
+        // CRITICAL FIX: Send doctors as JSON string
+        const doctorsData = formData.doctors.map(doc => ({
+            name: doc.doctorName,
+            specialty: doc.doctorSpecialty,
+            phone: doc.doctorPhone
+        }));
+        fd.append('doctors', JSON.stringify(doctorsData));
+
+        // Send doctor certificate files with correct field names
         formData.doctors.forEach((doc, idx) => {
-            fd.append(`doctors[${idx}][name]`, doc.doctorName);
-            fd.append(`doctors[${idx}][specialty]`, doc.doctorSpecialty);
-            fd.append(`doctors[${idx}][phone]`, doc.doctorPhone);
             if (doctorFiles[idx]) {
-                fd.append(`doctors[${idx}][certificate]`, doctorFiles[idx]);
+                fd.append(`doctors_${idx}_certificate`, doctorFiles[idx]);
             }
         });
+
+        // Debug log to verify
+        console.log('[Frontend] Sending doctors:', doctorsData);
+        console.log('[Frontend] Certificate files count:', Object.keys(doctorFiles).length);
 
         return fd;
     };
@@ -401,6 +412,12 @@ export default function MedeskOnboarding() {
 
         try {
             const payload = prepareFormDataForApi();
+
+            // Debug: Log all form data entries
+            for (let pair of payload.entries()) {
+                console.log('[FormData]', pair[0], pair[1] instanceof File ? `File: ${pair[1].name}` : pair[1]);
+            }
+
             const response = await fetch(ONBOARDING_CONFIG.post_submission.api_endpoint, {
                 method: 'POST',
                 body: payload,
