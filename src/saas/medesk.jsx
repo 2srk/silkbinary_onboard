@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     ArrowRight, ArrowLeft, Loader2, CheckCircle2, Check, X, Upload,
     Eye, EyeOff, Building2, Stethoscope, FileText, Mail, Phone, MapPin,
-    User, Lock, Shield, AlertCircle, Briefcase, ClipboardList, File, Trash2, Plus, Globe
+    User, Lock, Shield, AlertCircle, Briefcase, ClipboardList, File, Trash2, Plus, Globe, CreditCard
 } from 'lucide-react';
 
 // --- Onboarding Configuration ---
@@ -75,7 +75,7 @@ const ONBOARDING_CONFIG = {
             "Once verified, your account will be activated",
             "You will receive a confirmation email upon successful verification"
         ],
-        "api_endpoint": "https://api.silkbinary.com/api/onboarding/saas/medesk",
+        "api_endpoint": "/api/onboarding/saas/medesk",
         "method": "POST", "content_type": "multipart/form-data"
     },
     "validation_rules": {
@@ -95,7 +95,7 @@ const formatBytes = (bytes) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-// File Upload Component - Clean, sharp design
+// File Upload Component
 const FileUpload = ({ label, file, onFileChange, error, helpText, accept = ".pdf,.jpg,.jpeg,.png", required }) => {
     const inputRef = useRef(null);
 
@@ -145,7 +145,7 @@ const FileUpload = ({ label, file, onFileChange, error, helpText, accept = ".pdf
     );
 };
 
-// Step Indicator - Sharp, monospace, no curves
+// Step Indicator
 const StepIndicator = ({ currentStep, steps, setStep }) => (
     <>
         <div className="hidden sm:flex items-center w-full max-w-4xl mx-auto mb-12">
@@ -211,12 +211,15 @@ export default function MedeskOnboarding() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [accountName, setAccountName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [errors, setErrors] = useState({});
     const [serverMessage, setServerMessage] = useState(null);
+
     const selectedPlan = selectedPlanKey ? ONBOARDING_CONFIG.plan_selection.options[selectedPlanKey] : null;
     const maxDoctors = selectedPlan ? selectedPlan.max_doctors : 1;
+    const planPrice = selectedPlan ? selectedPlan.price : 0;
 
     // URL param handling for plan selection
     useEffect(() => {
@@ -326,6 +329,7 @@ export default function MedeskOnboarding() {
             else if (!validateFile(clinicProofFile)) newErrors.clinicProofFile = 'File must be <10MB, PDF/JPG/PNG';
         }
         else if (currentStep === 6) {
+            if (!accountName?.trim()) newErrors.accountName = 'Full name is required';
             if (!password) newErrors.password = 'Password is required';
             else if (password.length < 8) newErrors.password = 'Password must be at least 8 characters';
             if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
@@ -333,7 +337,7 @@ export default function MedeskOnboarding() {
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    }, [currentStep, selectedPlanKey, formData, doctorFiles, businessProofFile, clinicProofFile, password, confirmPassword]);
+    }, [currentStep, selectedPlanKey, formData, doctorFiles, businessProofFile, clinicProofFile, password, confirmPassword, accountName]);
 
     const nextStep = () => {
         if (validateStep()) {
@@ -358,7 +362,10 @@ export default function MedeskOnboarding() {
         fd.append('businessAddress', formData.businessAddress);
         fd.append('businessProofType', formData.businessProofType);
         fd.append('clinicProofType', formData.clinicProofType);
-        fd.append('password', password);
+        fd.append('account[name]', accountName);
+        fd.append('account[password]', password);
+        fd.append('isLogin', 'false');
+
         if (businessProofFile) fd.append('businessProofFile', businessProofFile);
         if (clinicProofFile) fd.append('clinicProofFile', clinicProofFile);
 
@@ -388,16 +395,12 @@ export default function MedeskOnboarding() {
             const data = await response.json();
 
             if (response.ok) {
-                // ✅ CHECK FOR PAYMENT REDIRECT URL
                 if (data.checkoutUrl) {
-                    // Redirect to payment gateway (PhonePe/PayPal)
                     console.log('[Medesk] Redirecting to payment:', data.checkoutUrl);
                     window.location.href = data.checkoutUrl;
                 } else if (data.redirect_url) {
-                    // Fallback redirect
                     window.location.href = data.redirect_url;
                 } else {
-                    // No payment needed - show success page
                     setSubmitSuccess(true);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
@@ -412,15 +415,14 @@ export default function MedeskOnboarding() {
         }
     };
 
+    // Plan selection render
     const renderPlanSelection = () => (
         <div className="w-full">
             <div className="mb-10 text-center">
-                <h1 className="text-4xl font-black uppercase tracking-tight mb-2">Select Infrastructure</h1>
-                <p className="text-gray-500 font-mono text-sm">Choose the computing power and environment for your project.</p>
+                <h1 className="text-4xl font-black uppercase tracking-tight mb-2">Select Your Plan</h1>
+                <p className="text-gray-500 font-mono text-sm">Choose the perfect plan for your practice</p>
             </div>
-
             {errors.plan && <p className="text-red-500 text-xs font-mono mb-4 text-center">{errors.plan}</p>}
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {Object.entries(ONBOARDING_CONFIG.plan_selection.options).map(([key, plan]) => {
                     const isSelected = selectedPlanKey === key;
@@ -429,7 +431,7 @@ export default function MedeskOnboarding() {
                             key={key}
                             onClick={() => setSelectedPlanKey(key)}
                             className={`relative flex flex-col border-2 cursor-pointer transition-all duration-200 bg-white
-                                ${isSelected ? 'border-black border-l-[6px] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]' : 'border-gray-200 border-l-[6px] border-l-transparent hover:border-gray-300 hover:shadow-sm'}`}
+                                ${isSelected ? 'border-black border-l-[6px] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]' : 'border-gray-200 border-l-[6px] border-l-transparent hover:border-gray-300'}`}
                         >
                             <div className="p-6 border-b border-gray-100">
                                 <div className="flex justify-between items-start mb-4">
@@ -443,331 +445,124 @@ export default function MedeskOnboarding() {
                             </div>
                             <div className="p-6 flex-1 bg-gray-50/50">
                                 <p className="text-sm font-mono text-gray-600 mb-3">Up to {plan.max_doctors} doctor{plan.max_doctors > 1 ? 's' : ''}</p>
-                                <ul className="space-y-2 font-mono text-xs">
-                                    <li className="flex justify-between items-center py-2 border-b border-gray-200/60">
-                                        <span className="text-gray-500">Doctor Accounts</span>
-                                        <span className="font-bold">{plan.max_doctors}</span>
-                                    </li>
-                                    <li className="flex justify-between items-center py-2">
-                                        <span className="text-gray-500">Support</span>
-                                        <span className="font-bold">{plan.max_doctors === 1 ? 'Standard' : 'Priority'}</span>
-                                    </li>
-                                </ul>
                             </div>
                         </div>
                     );
                 })}
             </div>
-
             <div className="flex justify-end mt-10">
-                <button
-                    onClick={nextStep}
-                    disabled={!selectedPlanKey}
-                    className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3 disabled:opacity-50"
-                >
-                    Continue to Clinic Information <ArrowRight className="w-4 h-4" />
+                <button onClick={nextStep} disabled={!selectedPlanKey} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3 disabled:opacity-50">
+                    Continue <ArrowRight className="w-4 h-4" />
                 </button>
             </div>
         </div>
     );
 
+    // Clinic info render (same as before, keep existing)
     const renderClinicInfo = () => (
         <div className="max-w-2xl mx-auto">
             <div className="mb-10 text-center">
                 <h1 className="text-4xl font-black uppercase tracking-tight mb-2">Clinic Information</h1>
                 <p className="text-gray-500 font-mono text-sm">Tell us about your practice</p>
             </div>
-
             <div className="space-y-6">
                 <div>
                     <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Name of the Clinic <span className="text-red-500">*</span></label>
-                    <input
-                        type="text"
-                        className={`w-full p-4 bg-gray-50 border-2 ${errors.clinicName ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                        value={formData.clinicName}
-                        onChange={e => handleFieldChange('clinicName', e.target.value)}
-                        placeholder="e.g., City Care Medical Center"
-                    />
+                    <input type="text" className={`w-full p-4 bg-gray-50 border-2 ${errors.clinicName ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.clinicName} onChange={e => handleFieldChange('clinicName', e.target.value)} placeholder="e.g., City Care Medical Center" />
                     {errors.clinicName && <p className="text-red-500 text-xs font-mono mt-1">{errors.clinicName}</p>}
                 </div>
-
                 <div>
                     <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Type of Clinic <span className="text-red-500">*</span></label>
-                    <select
-                        className={`w-full p-4 bg-gray-50 border-2 ${errors.clinicType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                        value={formData.clinicType}
-                        onChange={e => handleFieldChange('clinicType', e.target.value)}
-                    >
+                    <select className={`w-full p-4 bg-gray-50 border-2 ${errors.clinicType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.clinicType} onChange={e => handleFieldChange('clinicType', e.target.value)}>
                         <option value="">Select clinic type</option>
-                        {ONBOARDING_CONFIG.steps[0].fields.find(f => f.id === 'clinicType').options.map(opt => (
-                            <option key={opt}>{opt}</option>
-                        ))}
+                        {ONBOARDING_CONFIG.steps[0].fields.find(f => f.id === 'clinicType').options.map(opt => (<option key={opt}>{opt}</option>))}
                     </select>
                     {errors.clinicType && <p className="text-red-500 text-xs font-mono mt-1">{errors.clinicType}</p>}
                 </div>
-
                 {formData.clinicType === 'Other' && (
                     <div>
                         <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Please specify clinic type <span className="text-red-500">*</span></label>
-                        <input
-                            type="text"
-                            className={`w-full p-4 bg-gray-50 border-2 ${errors.otherClinicType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                            value={formData.otherClinicType}
-                            onChange={e => handleFieldChange('otherClinicType', e.target.value)}
-                            placeholder="Enter clinic type"
-                        />
+                        <input type="text" className={`w-full p-4 bg-gray-50 border-2 ${errors.otherClinicType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.otherClinicType} onChange={e => handleFieldChange('otherClinicType', e.target.value)} placeholder="Enter clinic type" />
                         {errors.otherClinicType && <p className="text-red-500 text-xs font-mono mt-1">{errors.otherClinicType}</p>}
                     </div>
                 )}
             </div>
-
             <div className="flex justify-between mt-10">
-                <button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">
-                    ← Back to Plans
-                </button>
-                <button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">
-                    Continue to Doctors <ArrowRight className="w-4 h-4" />
-                </button>
+                <button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">← Back</button>
+                <button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">Continue <ArrowRight className="w-4 h-4" /></button>
             </div>
         </div>
     );
 
+    // Doctors render (keep existing, omitted for brevity but include in final)
     const renderDoctors = () => (
         <div className="max-w-3xl mx-auto">
             <div className="mb-10 text-center">
                 <h1 className="text-4xl font-black uppercase tracking-tight mb-2">Doctor Information</h1>
-                <p className="text-gray-500 font-mono text-sm">
-                    Based on your selected plan, you can add up to {maxDoctors} doctor(s)
-                </p>
+                <p className="text-gray-500 font-mono text-sm">Based on your selected plan, you can add up to {maxDoctors} doctor(s)</p>
             </div>
-
-            {errors.doctorsEmpty && (
-                <div className="mb-6 p-4 bg-red-50 border-2 border-red-500 text-red-600 text-sm font-mono flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" /> {errors.doctorsEmpty}
-                </div>
-            )}
-
+            {errors.doctorsEmpty && (<div className="mb-6 p-4 bg-red-50 border-2 border-red-500 text-red-600 text-sm font-mono flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {errors.doctorsEmpty}</div>)}
             <div className="space-y-8">
                 {formData.doctors.map((doctor, idx) => (
                     <div key={doctor.id} className="border-2 border-gray-200 p-6 relative bg-white">
-                        {idx > 0 && (
-                            <button
-                                onClick={() => removeDoctor(idx)}
-                                className="absolute top-4 right-4 p-1 hover:bg-gray-100 transition-colors"
-                            >
-                                <X className="w-4 h-4 text-gray-500" />
-                            </button>
-                        )}
+                        {idx > 0 && (<button onClick={() => removeDoctor(idx)} className="absolute top-4 right-4 p-1 hover:bg-gray-100 transition-colors"><X className="w-4 h-4 text-gray-500" /></button>)}
                         <h3 className="font-mono font-bold text-sm uppercase tracking-widest text-gray-500 mb-4">Doctor {idx + 1}</h3>
-
                         <div className="space-y-5">
-                            <div>
-                                <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Doctor's Name <span className="text-red-500">*</span></label>
-                                <input
-                                    type="text"
-                                    className={`w-full p-4 bg-gray-50 border-2 ${errors[`doctor_${idx}_name`] ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                                    value={doctor.doctorName}
-                                    onChange={e => updateDoctor(idx, 'doctorName', e.target.value)}
-                                    placeholder="Full name as per medical registration"
-                                />
+                            <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Doctor's Name <span className="text-red-500">*</span></label>
+                                <input type="text" className={`w-full p-4 bg-gray-50 border-2 ${errors[`doctor_${idx}_name`] ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={doctor.doctorName} onChange={e => updateDoctor(idx, 'doctorName', e.target.value)} placeholder="Full name as per medical registration" />
                                 {errors[`doctor_${idx}_name`] && <p className="text-red-500 text-xs font-mono mt-1">{errors[`doctor_${idx}_name`]}</p>}
                             </div>
-
-                            <div>
-                                <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Specialty <span className="text-red-500">*</span></label>
-                                <select
-                                    className={`w-full p-4 bg-gray-50 border-2 ${errors[`doctor_${idx}_specialty`] ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                                    value={doctor.doctorSpecialty}
-                                    onChange={e => updateDoctor(idx, 'doctorSpecialty', e.target.value)}
-                                >
+                            <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Specialty <span className="text-red-500">*</span></label>
+                                <select className={`w-full p-4 bg-gray-50 border-2 ${errors[`doctor_${idx}_specialty`] ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={doctor.doctorSpecialty} onChange={e => updateDoctor(idx, 'doctorSpecialty', e.target.value)}>
                                     <option value="">Select specialty</option>
-                                    {ONBOARDING_CONFIG.steps[1].fields.find(f => f.id === 'doctorSpecialty').options.map(opt => (
-                                        <option key={opt}>{opt}</option>
-                                    ))}
+                                    {ONBOARDING_CONFIG.steps[1].fields.find(f => f.id === 'doctorSpecialty').options.map(opt => (<option key={opt}>{opt}</option>))}
                                 </select>
                                 {errors[`doctor_${idx}_specialty`] && <p className="text-red-500 text-xs font-mono mt-1">{errors[`doctor_${idx}_specialty`]}</p>}
                             </div>
-
-                            <div>
-                                <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Doctor's Phone Number <span className="text-red-500">*</span></label>
-                                <input
-                                    type="tel"
-                                    className={`w-full p-4 bg-gray-50 border-2 ${errors[`doctor_${idx}_phone`] ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                                    value={doctor.doctorPhone}
-                                    onChange={e => updateDoctor(idx, 'doctorPhone', e.target.value)}
-                                    placeholder="10-digit mobile number"
-                                />
+                            <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Doctor's Phone Number <span className="text-red-500">*</span></label>
+                                <input type="tel" className={`w-full p-4 bg-gray-50 border-2 ${errors[`doctor_${idx}_phone`] ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={doctor.doctorPhone} onChange={e => updateDoctor(idx, 'doctorPhone', e.target.value)} placeholder="10-digit mobile number" />
                                 {errors[`doctor_${idx}_phone`] && <p className="text-red-500 text-xs font-mono mt-1">{errors[`doctor_${idx}_phone`]}</p>}
                             </div>
-
-                            <FileUpload
-                                label="Doctor's Registration Certificate"
-                                file={doctorFiles[idx]}
-                                onFileChange={(file) => setDoctorFiles(prev => ({ ...prev, [idx]: file }))}
-                                error={errors[`doctor_${idx}_file`]}
-                                helpText="Medical Council registration, state registration, or relevant council certificate."
-                                required
-                            />
+                            <FileUpload label="Doctor's Registration Certificate" file={doctorFiles[idx]} onFileChange={(file) => setDoctorFiles(prev => ({ ...prev, [idx]: file }))} error={errors[`doctor_${idx}_file`]} helpText="Medical Council registration, state registration, or relevant council certificate." required />
                         </div>
                     </div>
                 ))}
             </div>
-
-            {formData.doctors.length < maxDoctors && (
-                <button
-                    onClick={addDoctor}
-                    className="mt-6 w-full py-4 border-2 border-dashed border-gray-300 text-gray-600 hover:border-black hover:text-black transition-all font-mono text-sm uppercase tracking-wider flex items-center justify-center gap-2"
-                >
-                    <Plus className="w-4 h-4" /> Add Another Doctor
-                </button>
-            )}
-
+            {formData.doctors.length < maxDoctors && (<button onClick={addDoctor} className="mt-6 w-full py-4 border-2 border-dashed border-gray-300 text-gray-600 hover:border-black hover:text-black transition-all font-mono text-sm uppercase tracking-wider flex items-center justify-center gap-2"><Plus className="w-4 h-4" /> Add Another Doctor</button>)}
             <div className="flex justify-between mt-10">
-                <button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">
-                    ← Back to Clinic
-                </button>
-                <button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">
-                    Continue to Business <ArrowRight className="w-4 h-4" />
-                </button>
+                <button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">← Back</button>
+                <button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">Continue <ArrowRight className="w-4 h-4" /></button>
             </div>
         </div>
     );
 
+    // Business render (keep existing, omitted for brevity but include in final)
     const renderBusiness = () => (
         <div className="max-w-2xl mx-auto">
-            <div className="mb-10 text-center">
-                <h1 className="text-4xl font-black uppercase tracking-tight mb-2">Business Information</h1>
-                <p className="text-gray-500 font-mono text-sm">Legal details for verification</p>
-            </div>
-
+            <div className="mb-10 text-center"><h1 className="text-4xl font-black uppercase tracking-tight mb-2">Business Information</h1><p className="text-gray-500 font-mono text-sm">Legal details for verification</p></div>
             <div className="space-y-6">
-                <div>
-                    <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Business / Clinic Name <span className="text-red-500">*</span></label>
-                    <input
-                        type="text"
-                        className={`w-full p-4 bg-gray-50 border-2 ${errors.businessName ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                        value={formData.businessName}
-                        onChange={e => handleFieldChange('businessName', e.target.value)}
-                        placeholder="Legal name of the business entity"
-                    />
-                    {errors.businessName && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessName}</p>}
-                </div>
-
+                <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Business / Clinic Name <span className="text-red-500">*</span></label><input type="text" className={`w-full p-4 bg-gray-50 border-2 ${errors.businessName ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.businessName} onChange={e => handleFieldChange('businessName', e.target.value)} placeholder="Legal name of the business entity" />{errors.businessName && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessName}</p>}</div>
                 <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Phone Number <span className="text-red-500">*</span></label>
-                        <input
-                            type="tel"
-                            className={`w-full p-4 bg-gray-50 border-2 ${errors.businessPhone ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                            value={formData.businessPhone}
-                            onChange={e => handleFieldChange('businessPhone', e.target.value)}
-                            placeholder="10-digit mobile number"
-                        />
-                        {errors.businessPhone && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessPhone}</p>}
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Email Address <span className="text-red-500">*</span></label>
-                        <input
-                            type="email"
-                            className={`w-full p-4 bg-gray-50 border-2 ${errors.businessEmail ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                            value={formData.businessEmail}
-                            onChange={e => handleFieldChange('businessEmail', e.target.value)}
-                            placeholder="clinic@example.com"
-                        />
-                        {errors.businessEmail && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessEmail}</p>}
-                    </div>
+                    <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Phone Number <span className="text-red-500">*</span></label><input type="tel" className={`w-full p-4 bg-gray-50 border-2 ${errors.businessPhone ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.businessPhone} onChange={e => handleFieldChange('businessPhone', e.target.value)} placeholder="10-digit mobile number" />{errors.businessPhone && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessPhone}</p>}</div>
+                    <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Email Address <span className="text-red-500">*</span></label><input type="email" className={`w-full p-4 bg-gray-50 border-2 ${errors.businessEmail ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.businessEmail} onChange={e => handleFieldChange('businessEmail', e.target.value)} placeholder="clinic@example.com" />{errors.businessEmail && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessEmail}</p>}</div>
                 </div>
-
-                <div>
-                    <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Address <span className="text-red-500">*</span></label>
-                    <textarea
-                        rows={3}
-                        className={`w-full p-4 bg-gray-50 border-2 ${errors.businessAddress ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                        value={formData.businessAddress}
-                        onChange={e => handleFieldChange('businessAddress', e.target.value)}
-                        placeholder="Full address with city, state, pin code"
-                    />
-                    {errors.businessAddress && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessAddress}</p>}
-                </div>
-
-                <div>
-                    <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Business Proof Type <span className="text-red-500">*</span></label>
-                    <select
-                        className={`w-full p-4 bg-gray-50 border-2 ${errors.businessProofType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                        value={formData.businessProofType}
-                        onChange={e => handleFieldChange('businessProofType', e.target.value)}
-                    >
-                        <option value="">Select proof type</option>
-                        {ONBOARDING_CONFIG.steps[2].fields.find(f => f.id === 'businessProofType').options.map(opt => (
-                            <option key={opt}>{opt}</option>
-                        ))}
-                    </select>
-                    {errors.businessProofType && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessProofType}</p>}
-                </div>
-
-                <FileUpload
-                    label="Upload Business Proof"
-                    file={businessProofFile}
-                    onFileChange={setBusinessProofFile}
-                    error={errors.businessProofFile}
-                    helpText="PAN Card, GST Certificate, Trade License, Shop & Establishment Certificate, Partnership Deed, or Company Incorporation Certificate"
-                    required
-                />
+                <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Address <span className="text-red-500">*</span></label><textarea rows={3} className={`w-full p-4 bg-gray-50 border-2 ${errors.businessAddress ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.businessAddress} onChange={e => handleFieldChange('businessAddress', e.target.value)} placeholder="Full address with city, state, pin code" />{errors.businessAddress && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessAddress}</p>}</div>
+                <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Business Proof Type <span className="text-red-500">*</span></label><select className={`w-full p-4 bg-gray-50 border-2 ${errors.businessProofType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.businessProofType} onChange={e => handleFieldChange('businessProofType', e.target.value)}><option value="">Select proof type</option>{ONBOARDING_CONFIG.steps[2].fields.find(f => f.id === 'businessProofType').options.map(opt => (<option key={opt}>{opt}</option>))}</select>{errors.businessProofType && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessProofType}</p>}</div>
+                <FileUpload label="Upload Business Proof" file={businessProofFile} onFileChange={setBusinessProofFile} error={errors.businessProofFile} helpText="PAN Card, GST Certificate, Trade License, Shop & Establishment Certificate, Partnership Deed, or Company Incorporation Certificate" required />
             </div>
-
-            <div className="flex justify-between mt-10">
-                <button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">
-                    ← Back to Doctors
-                </button>
-                <button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">
-                    Continue to Clinic Proof <ArrowRight className="w-4 h-4" />
-                </button>
-            </div>
+            <div className="flex justify-between mt-10"><button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">← Back</button><button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">Continue <ArrowRight className="w-4 h-4" /></button></div>
         </div>
     );
 
+    // Clinic proof render (keep existing)
     const renderClinicProof = () => (
         <div className="max-w-2xl mx-auto">
-            <div className="mb-10 text-center">
-                <h1 className="text-4xl font-black uppercase tracking-tight mb-2">Medical Clinic Proof</h1>
-                <p className="text-gray-500 font-mono text-sm">Verify your clinic's existence</p>
-            </div>
-
+            <div className="mb-10 text-center"><h1 className="text-4xl font-black uppercase tracking-tight mb-2">Medical Clinic Proof</h1><p className="text-gray-500 font-mono text-sm">Verify your clinic's existence</p></div>
             <div className="space-y-6">
-                <div>
-                    <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Document Type <span className="text-red-500">*</span></label>
-                    <select
-                        className={`w-full p-4 bg-gray-50 border-2 ${errors.clinicProofType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`}
-                        value={formData.clinicProofType}
-                        onChange={e => handleFieldChange('clinicProofType', e.target.value)}
-                    >
-                        <option value="">Select document type</option>
-                        {ONBOARDING_CONFIG.steps[3].fields.find(f => f.id === 'clinicProofType').options.map(opt => (
-                            <option key={opt}>{opt}</option>
-                        ))}
-                    </select>
-                    {errors.clinicProofType && <p className="text-red-500 text-xs font-mono mt-1">{errors.clinicProofType}</p>}
-                </div>
-
-                <FileUpload
-                    label="Upload Document"
-                    file={clinicProofFile}
-                    onFileChange={setClinicProofFile}
-                    error={errors.clinicProofFile}
-                    helpText="Clinic Registration Certificate, Trade License, Electricity Bill, Rent Agreement, or Property Tax Receipt"
-                    required
-                />
+                <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Document Type <span className="text-red-500">*</span></label><select className={`w-full p-4 bg-gray-50 border-2 ${errors.clinicProofType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.clinicProofType} onChange={e => handleFieldChange('clinicProofType', e.target.value)}><option value="">Select document type</option>{ONBOARDING_CONFIG.steps[3].fields.find(f => f.id === 'clinicProofType').options.map(opt => (<option key={opt}>{opt}</option>))}</select>{errors.clinicProofType && <p className="text-red-500 text-xs font-mono mt-1">{errors.clinicProofType}</p>}</div>
+                <FileUpload label="Upload Document" file={clinicProofFile} onFileChange={setClinicProofFile} error={errors.clinicProofFile} helpText="Clinic Registration Certificate, Trade License, Electricity Bill, Rent Agreement, or Property Tax Receipt" required />
             </div>
-
-            <div className="flex justify-between mt-10">
-                <button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">
-                    ← Back to Business
-                </button>
-                <button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">
-                    Review Application <ArrowRight className="w-4 h-4" />
-                </button>
-            </div>
+            <div className="flex justify-between mt-10"><button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">← Back</button><button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">Review Application <ArrowRight className="w-4 h-4" /></button></div>
         </div>
     );
 
@@ -777,17 +572,15 @@ export default function MedeskOnboarding() {
                 <div className="max-w-2xl mx-auto text-center">
                     <div className="border-2 border-green-500 bg-green-50 p-8">
                         <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                        <h2 className="text-2xl font-black uppercase tracking-tight">{ONBOARDING_CONFIG.post_submission.success_message}</h2>
-                        <p className="text-gray-600 font-mono text-sm mt-2">{ONBOARDING_CONFIG.post_submission.description}</p>
+                        <h2 className="text-2xl font-black uppercase tracking-tight">Payment Initiated!</h2>
+                        <p className="text-gray-600 font-mono text-sm mt-2">Your order has been created. Complete payment to activate your account.</p>
                         <div className="mt-6 text-left">
                             <h3 className="font-mono font-bold text-sm uppercase tracking-widest mb-3">Next Steps:</h3>
                             <ul className="space-y-2">
-                                {ONBOARDING_CONFIG.post_submission.next_steps.map((step, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-sm font-mono text-gray-600">
-                                        <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                                        {step}
-                                    </li>
-                                ))}
+                                <li className="flex items-start gap-2 text-sm font-mono text-gray-600"><Check className="w-4 h-4 text-green-600 mt-0.5" /> Complete payment to activate your account</li>
+                                <li className="flex items-start gap-2 text-sm font-mono text-gray-600"><Check className="w-4 h-4 text-green-600 mt-0.5" /> Check your email for verification link</li>
+                                <li className="flex items-start gap-2 text-sm font-mono text-gray-600"><Check className="w-4 h-4 text-green-600 mt-0.5" /> Check your SMS for OTP verification code</li>
+                                <li className="flex items-start gap-2 text-sm font-mono text-gray-600"><Check className="w-4 h-4 text-green-600 mt-0.5" /> Your account will be activated upon successful verification</li>
                             </ul>
                         </div>
                     </div>
@@ -798,8 +591,27 @@ export default function MedeskOnboarding() {
         return (
             <div className="max-w-3xl mx-auto">
                 <div className="mb-10 text-center">
-                    <h1 className="text-4xl font-black uppercase tracking-tight mb-2">Review & Submit</h1>
-                    <p className="text-gray-500 font-mono text-sm">Please review all information before submitting</p>
+                    <h1 className="text-4xl font-black uppercase tracking-tight mb-2">Review & Pay</h1>
+                    <p className="text-gray-500 font-mono text-sm">Please review all information before proceeding to payment</p>
+                </div>
+
+                {/* Price Summary Card */}
+                <div className="mb-8 border-2 border-black bg-black text-white p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-mono font-bold text-sm uppercase tracking-widest">Order Summary</h3>
+                        <CreditCard className="w-5 h-5" />
+                    </div>
+                    <div className="flex justify-between items-end">
+                        <div>
+                            <p className="text-xs font-mono opacity-70">Total Amount</p>
+                            <p className="text-4xl font-black">₹{planPrice}</p>
+                            <p className="text-xs font-mono opacity-70 mt-1">{selectedPlan?.name} • Annual Billing</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xs font-mono opacity-70">Inclusive of all taxes</p>
+                            <p className="text-xs font-mono opacity-70">Secure payment via PhonePe/PayPal</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="space-y-6">
@@ -819,7 +631,6 @@ export default function MedeskOnboarding() {
                                     <div key={idx} className="border-b border-gray-100 last:border-0 pb-3 last:pb-0">
                                         <p className="font-mono font-medium">{doc.doctorName || '—'}</p>
                                         <p className="text-xs font-mono text-gray-500">{doc.doctorSpecialty || '—'} • {doc.doctorPhone || '—'}</p>
-                                        <p className="text-[10px] font-mono text-gray-400 mt-1">Certificate uploaded</p>
                                     </div>
                                 ))}
                             </div>
@@ -843,46 +654,26 @@ export default function MedeskOnboarding() {
                     </div>
 
                     <div className="border-2 border-gray-200 p-6 bg-white">
-                        <h3 className="font-mono font-bold text-sm uppercase tracking-widest mb-3">Account Security</h3>
+                        <h3 className="font-mono font-bold text-sm uppercase tracking-widest mb-3">Account Information</h3>
                         <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Full Name <span className="text-red-500">*</span></label>
+                                <input type="text" className={`w-full p-4 bg-gray-50 border-2 ${errors.accountName ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={accountName} onChange={e => setAccountName(e.target.value)} placeholder="Your full name" />
+                                {errors.accountName && <p className="text-red-500 text-xs font-mono mt-1">{errors.accountName}</p>}
+                            </div>
                             <div>
                                 <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Password <span className="text-red-500">*</span></label>
                                 <div className="relative">
-                                    <input
-                                        type={showPassword ? "text" : "password"}
-                                        className={`w-full p-4 bg-gray-50 border-2 ${errors.password ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono pr-12`}
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                        placeholder="Create a strong password"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    >
-                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                    </button>
+                                    <input type={showPassword ? "text" : "password"} className={`w-full p-4 bg-gray-50 border-2 ${errors.password ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono pr-12`} value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a strong password" />
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
                                 </div>
                                 {errors.password && <p className="text-red-500 text-xs font-mono mt-1">{errors.password}</p>}
                             </div>
-
                             <div>
                                 <label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Confirm Password <span className="text-red-500">*</span></label>
                                 <div className="relative">
-                                    <input
-                                        type={showConfirmPassword ? "text" : "password"}
-                                        className={`w-full p-4 bg-gray-50 border-2 ${errors.confirmPassword ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono pr-12`}
-                                        value={confirmPassword}
-                                        onChange={e => setConfirmPassword(e.target.value)}
-                                        placeholder="Confirm your password"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    >
-                                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                    </button>
+                                    <input type={showConfirmPassword ? "text" : "password"} className={`w-full p-4 bg-gray-50 border-2 ${errors.confirmPassword ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono pr-12`} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Confirm your password" />
+                                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">{showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
                                 </div>
                                 {errors.confirmPassword && <p className="text-red-500 text-xs font-mono mt-1">{errors.confirmPassword}</p>}
                             </div>
@@ -898,16 +689,10 @@ export default function MedeskOnboarding() {
                 )}
 
                 <div className="flex justify-between mt-8">
-                    <button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">
-                        ← Back
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3 disabled:opacity-50"
-                    >
-                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                        {isSubmitting ? ONBOARDING_CONFIG.steps[4].submitting_text : ONBOARDING_CONFIG.steps[4].submit_button}
+                    <button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">← Back</button>
+                    <button onClick={handleSubmit} disabled={isSubmitting} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3 disabled:opacity-50">
+                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                        {isSubmitting ? "Processing..." : `Pay ₹${planPrice} & Activate`}
                     </button>
                 </div>
             </div>
