@@ -211,13 +211,10 @@ export default function MedeskOnboarding() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [captchaToken, setCaptchaToken] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [errors, setErrors] = useState({});
     const [serverMessage, setServerMessage] = useState(null);
-    const recaptchaRef = useRef(null);
-
     const selectedPlan = selectedPlanKey ? ONBOARDING_CONFIG.plan_selection.options[selectedPlanKey] : null;
     const maxDoctors = selectedPlan ? selectedPlan.max_doctors : 1;
 
@@ -332,12 +329,11 @@ export default function MedeskOnboarding() {
             if (!password) newErrors.password = 'Password is required';
             else if (password.length < 8) newErrors.password = 'Password must be at least 8 characters';
             if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-            if (!captchaToken) newErrors.captcha = 'Please complete reCAPTCHA';
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    }, [currentStep, selectedPlanKey, formData, doctorFiles, businessProofFile, clinicProofFile, password, confirmPassword, captchaToken]);
+    }, [currentStep, selectedPlanKey, formData, doctorFiles, businessProofFile, clinicProofFile, password, confirmPassword]);
 
     const nextStep = () => {
         if (validateStep()) {
@@ -363,8 +359,6 @@ export default function MedeskOnboarding() {
         fd.append('businessProofType', formData.businessProofType);
         fd.append('clinicProofType', formData.clinicProofType);
         fd.append('password', password);
-        fd.append('recaptcha_token', captchaToken);
-
         if (businessProofFile) fd.append('businessProofFile', businessProofFile);
         if (clinicProofFile) fd.append('clinicProofFile', clinicProofFile);
 
@@ -417,19 +411,6 @@ export default function MedeskOnboarding() {
             setIsSubmitting(false);
         }
     };
-    // Load reCAPTCHA script
-    useEffect(() => {
-        const script = document.createElement('script');
-        script.src = 'https://www.google.com/recaptcha/api.js';
-        script.async = true;
-        script.defer = true;
-        document.head.appendChild(script);
-
-        return () => {
-            const scripts = document.querySelectorAll('script[src*="recaptcha"]');
-            scripts.forEach(s => s.remove());
-        };
-    }, []);
 
     const renderPlanSelection = () => (
         <div className="w-full">
@@ -906,12 +887,6 @@ export default function MedeskOnboarding() {
                                 {errors.confirmPassword && <p className="text-red-500 text-xs font-mono mt-1">{errors.confirmPassword}</p>}
                             </div>
                         </div>
-                    </div>
-
-                    <div className="border-2 border-gray-200 p-6 bg-white">
-                        <h3 className="font-mono font-bold text-sm uppercase tracking-widest mb-3">Security Verification</h3>
-                        <div className="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" data-callback={(token) => setCaptchaToken(token)}></div>
-                        {errors.captcha && <p className="text-red-500 text-xs font-mono mt-2">{errors.captcha}</p>}
                     </div>
                 </div>
 
