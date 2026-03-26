@@ -76,7 +76,8 @@ const ONBOARDING_CONFIG = {
             "You will receive a confirmation email upon successful verification"
         ],
         "api_endpoint": "https://api.silkbinary.com/api/onboarding/saas/medesk",
-        "method": "POST", "content_type": "multipart/form-data"
+        "method": "POST",
+        "content_type": "multipart/form-data"
     },
     "validation_rules": {
         "phone": { "pattern": "^[6-9]\\d{9}$", "message": "Please enter a valid 10-digit Indian mobile number" },
@@ -95,9 +96,18 @@ const formatBytes = (bytes) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-// File Upload Component
-const FileUpload = ({ label, file, onFileChange, error, helpText, accept = ".pdf,.jpg,.jpeg,.png", required }) => {
+// File Upload Component with size restriction display
+const FileUpload = ({ label, file, onFileChange, error, helpText, accept = ".pdf,.jpg,.jpeg,.png", required, maxSize = 10 }) => {
     const inputRef = useRef(null);
+    const maxSizeBytes = maxSize * 1024 * 1024;
+
+    const handleFileSelect = (selectedFile) => {
+        if (selectedFile && selectedFile.size > maxSizeBytes) {
+            alert(`File size exceeds ${maxSize}MB limit. Please select a smaller file.`);
+            return;
+        }
+        onFileChange(selectedFile);
+    };
 
     return (
         <div className="space-y-2">
@@ -128,14 +138,14 @@ const FileUpload = ({ label, file, onFileChange, error, helpText, accept = ".pdf
                     <div className="p-8 text-center">
                         <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
                         <p className="text-xs font-mono text-gray-500 uppercase tracking-wider">Click to upload</p>
-                        <p className="text-[10px] font-mono text-gray-400 mt-1">PDF, JPG, PNG up to 10MB</p>
+                        <p className="text-[10px] font-mono text-gray-400 mt-1">PDF, JPG, PNG up to {maxSize}MB</p>
                     </div>
                 )}
                 <input
                     ref={inputRef}
                     type="file"
                     accept={accept}
-                    onChange={(e) => onFileChange(e.target.files[0] || null)}
+                    onChange={(e) => handleFileSelect(e.target.files[0] || null)}
                     className="hidden"
                 />
             </div>
@@ -366,14 +376,18 @@ export default function MedeskOnboarding() {
         fd.append('password', accountPassword);
         fd.append('isLogin', 'false');
 
+        // Add files
         if (businessProofFile) fd.append('businessProofFile', businessProofFile);
         if (clinicProofFile) fd.append('clinicProofFile', clinicProofFile);
 
+        // Add doctors as individual fields (not JSON)
         formData.doctors.forEach((doc, idx) => {
             fd.append(`doctors[${idx}][name]`, doc.doctorName);
             fd.append(`doctors[${idx}][specialty]`, doc.doctorSpecialty);
             fd.append(`doctors[${idx}][phone]`, doc.doctorPhone);
-            if (doctorFiles[idx]) fd.append(`doctors[${idx}][certificate]`, doctorFiles[idx]);
+            if (doctorFiles[idx]) {
+                fd.append(`doctors[${idx}][certificate]`, doctorFiles[idx]);
+            }
         });
 
         return fd;
@@ -523,7 +537,15 @@ export default function MedeskOnboarding() {
                                 <input type="tel" className={`w-full p-4 bg-gray-50 border-2 ${errors[`doctor_${idx}_phone`] ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={doctor.doctorPhone} onChange={e => updateDoctor(idx, 'doctorPhone', e.target.value)} placeholder="10-digit mobile number" />
                                 {errors[`doctor_${idx}_phone`] && <p className="text-red-500 text-xs font-mono mt-1">{errors[`doctor_${idx}_phone`]}</p>}
                             </div>
-                            <FileUpload label="Doctor's Registration Certificate" file={doctorFiles[idx]} onFileChange={(file) => setDoctorFiles(prev => ({ ...prev, [idx]: file }))} error={errors[`doctor_${idx}_file`]} helpText="Medical Council registration, state registration, or relevant council certificate." required />
+                            <FileUpload
+                                label="Doctor's Registration Certificate"
+                                file={doctorFiles[idx]}
+                                onFileChange={(file) => setDoctorFiles(prev => ({ ...prev, [idx]: file }))}
+                                error={errors[`doctor_${idx}_file`]}
+                                helpText="Medical Council registration, state registration, or relevant council certificate. Max 10MB, PDF/JPG/PNG"
+                                required
+                                maxSize={10}
+                            />
                         </div>
                     </div>
                 ))}
@@ -548,7 +570,7 @@ export default function MedeskOnboarding() {
                 </div>
                 <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Address <span className="text-red-500">*</span></label><textarea rows={3} className={`w-full p-4 bg-gray-50 border-2 ${errors.businessAddress ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.businessAddress} onChange={e => handleFieldChange('businessAddress', e.target.value)} placeholder="Full address with city, state, pin code" />{errors.businessAddress && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessAddress}</p>}</div>
                 <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Business Proof Type <span className="text-red-500">*</span></label><select className={`w-full p-4 bg-gray-50 border-2 ${errors.businessProofType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.businessProofType} onChange={e => handleFieldChange('businessProofType', e.target.value)}><option value="">Select proof type</option>{ONBOARDING_CONFIG.steps[2].fields.find(f => f.id === 'businessProofType').options.map(opt => (<option key={opt}>{opt}</option>))}</select>{errors.businessProofType && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessProofType}</p>}</div>
-                <FileUpload label="Upload Business Proof" file={businessProofFile} onFileChange={setBusinessProofFile} error={errors.businessProofFile} helpText="PAN Card, GST Certificate, Trade License, Shop & Establishment Certificate, Partnership Deed, or Company Incorporation Certificate" required />
+                <FileUpload label="Upload Business Proof" file={businessProofFile} onFileChange={setBusinessProofFile} error={errors.businessProofFile} helpText="PAN Card, GST Certificate, Trade License, etc. Max 10MB, PDF/JPG/PNG" required maxSize={10} />
             </div>
             <div className="flex justify-between mt-10"><button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">← Back</button><button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">Continue <ArrowRight className="w-4 h-4" /></button></div>
         </div>
@@ -560,7 +582,7 @@ export default function MedeskOnboarding() {
             <div className="mb-10 text-center"><h1 className="text-4xl font-black uppercase tracking-tight mb-2">Medical Clinic Proof</h1><p className="text-gray-500 font-mono text-sm">Verify your clinic's existence</p></div>
             <div className="space-y-6">
                 <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Document Type <span className="text-red-500">*</span></label><select className={`w-full p-4 bg-gray-50 border-2 ${errors.clinicProofType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.clinicProofType} onChange={e => handleFieldChange('clinicProofType', e.target.value)}><option value="">Select document type</option>{ONBOARDING_CONFIG.steps[3].fields.find(f => f.id === 'clinicProofType').options.map(opt => (<option key={opt}>{opt}</option>))}</select>{errors.clinicProofType && <p className="text-red-500 text-xs font-mono mt-1">{errors.clinicProofType}</p>}</div>
-                <FileUpload label="Upload Document" file={clinicProofFile} onFileChange={setClinicProofFile} error={errors.clinicProofFile} helpText="Clinic Registration Certificate, Trade License, Electricity Bill, Rent Agreement, or Property Tax Receipt" required />
+                <FileUpload label="Upload Document" file={clinicProofFile} onFileChange={setClinicProofFile} error={errors.clinicProofFile} helpText="Clinic Registration Certificate, Trade License, Electricity Bill, Rent Agreement, or Property Tax Receipt. Max 10MB, PDF/JPG/PNG" required maxSize={10} />
             </div>
             <div className="flex justify-between mt-10"><button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">← Back</button><button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">Review Application <ArrowRight className="w-4 h-4" /></button></div>
         </div>
