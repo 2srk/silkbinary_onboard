@@ -7,12 +7,13 @@ import VPS from './vps';
 import Dedicated from './dedicated';
 import PaymentSuccess from './PaymentSuccess';
 import PaymentStatus from './PS.jsx';
+import SaasRouter from './saas/saas.jsx';
 
 
 // Custom Styles Injection (shared across all services)
 export const CustomStyles = () => (
     <style dangerouslySetInnerHTML={{__html: `
-    @keyframes slideLeft {
+    @frames slideLeft {
       0% { transform: translateX(20px); opacity: 0; }
       100% { transform: translateX(0); opacity: 1; }
     }
@@ -308,6 +309,12 @@ function App() {
                             <PaymentStatus />
                         </>
                     } />
+                    <Route path="/saas/*" element={
+                        <>
+                            <Header currency={currency} setCurrency={setCurrency} />
+                            <SaasRouter />
+                        </>
+                    } />
                     {/* Payment routes */}
                     <Route path="/payment/success" element={
                         <>
@@ -315,6 +322,7 @@ function App() {
                             <PaymentSuccess />
                         </>
                     } />
+
                     <Route path="/payment/failed" element={
                         <>
                             <Header currency={currency} setCurrency={setCurrency} />
