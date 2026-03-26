@@ -75,7 +75,7 @@ const ONBOARDING_CONFIG = {
             "Once verified, your account will be activated",
             "You will receive a confirmation email upon successful verification"
         ],
-        "api_endpoint": "/api/onboarding/saas/medesk",
+        "api_endpoint": "https://api.silkbinary.com/api/onboarding/saas/medesk",
         "method": "POST", "content_type": "multipart/form-data"
     },
     "validation_rules": {
