@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     ArrowRight, ArrowLeft, Loader2, CheckCircle2, Check, X, Upload,
     Eye, EyeOff, Building2, Stethoscope, FileText, Mail, Phone, MapPin,
-    User, Lock, Shield, AlertCircle, Briefcase, ClipboardList, File, Trash2, Plus, Globe, CreditCard
+    User, Lock, Shield, AlertCircle, Briefcase, ClipboardList, File, Trash2, Plus, CreditCard
 } from 'lucide-react';
 
 // --- Onboarding Configuration ---
@@ -28,12 +28,13 @@ const ONBOARDING_CONFIG = {
         {
             "step": 2, "title": "Doctor Information",
             "description": "Based on your selected plan, you can add up to {max_doctors} doctor(s)",
-            "dynamic_fields": true, "max_entries": "{plan.max_doctors}",
+            "dynamic_fields": true,
+            "max_entries": "{plan.max_doctors}",
             "fields": [
                 { "id": "doctorName", "question": "Doctor's Name", "type": "text", "placeholder": "Full name as per medical registration", "required": true },
                 { "id": "doctorSpecialty", "question": "Specialty", "type": "select", "options": ["General Physician", "Cardiologist", "Dermatologist", "ENT Specialist", "Gynecologist", "Neurologist", "Orthopedic Surgeon", "Pediatrician", "Psychiatrist", "Radiologist", "Dentist", "Physiotherapist", "Ayurvedic Doctor", "Homeopathic Doctor", "Other"], "required": true },
                 { "id": "doctorPhone", "question": "Doctor's Phone Number", "type": "tel", "placeholder": "10-digit mobile number", "required": true },
-                { "id": "doctorRegistrationFile", "question": "Doctor's Registration Certificate", "type": "file", "accept": ".pdf,.jpg,.jpeg,.png", "max_size": "10MB", "required": true, "help_text": "Medical Council registration, state registration, or relevant council certificate." }
+                { "id": "doctorRegistrationFile", "question": "Doctor's Registration Certificate", "type": "file", "accept": ".pdf,.jpg,.jpeg,.png", "max_size": "10MB", "required": true, "help_text": "Medical Council registration certificate" }
             ]
         },
         {
@@ -44,7 +45,7 @@ const ONBOARDING_CONFIG = {
                 { "id": "businessEmail", "question": "Email Address", "type": "email", "placeholder": "clinic@example.com", "required": true },
                 { "id": "businessAddress", "question": "Address", "type": "textarea", "rows": 3, "placeholder": "Full address with city, state, pin code", "required": true },
                 { "id": "businessProofType", "question": "Business Proof Type", "type": "select", "options": ["PAN Card", "GST Certificate", "Trade License", "Shop & Establishment Certificate", "Partnership Deed", "Company Incorporation Certificate"], "required": true },
-                { "id": "businessProofFile", "question": "Upload Business Proof", "type": "file", "accept": ".pdf,.jpg,.jpeg,.png", "max_size": "10MB", "required": true, "help_text": "PAN Card, GST Certificate, Trade License, etc." }
+                { "id": "businessProofFile", "question": "Upload Business Proof", "type": "file", "accept": ".pdf,.jpg,.jpeg,.png", "max_size": "10MB", "required": true, "help_text": "PAN Card, GST Certificate, Trade License" }
             ]
         },
         {
@@ -72,8 +73,7 @@ const ONBOARDING_CONFIG = {
         "next_steps": [
             "Please verify your email using the verification link sent to your email",
             "Please verify your phone number using the OTP sent via SMS",
-            "Once verified, your account will be activated",
-            "You will receive a confirmation email upon successful verification"
+            "Once verified, your account will be activated"
         ],
         "api_endpoint": "https://api.silkbinary.com/api/onboarding/saas/medesk",
         "method": "POST",
@@ -382,7 +382,7 @@ export default function MedeskOnboarding() {
         if (businessProofFile) fd.append('businessProofFile', businessProofFile);
         if (clinicProofFile) fd.append('clinicProofFile', clinicProofFile);
 
-        // CRITICAL FIX: Send doctors as JSON string
+        // Send doctors as JSON string
         const doctorsData = formData.doctors.map(doc => ({
             name: doc.doctorName,
             specialty: doc.doctorSpecialty,
@@ -390,33 +390,28 @@ export default function MedeskOnboarding() {
         }));
         fd.append('doctors', JSON.stringify(doctorsData));
 
-        // Send doctor certificate files with correct field names
+        // Send doctor certificate files
         formData.doctors.forEach((doc, idx) => {
             if (doctorFiles[idx]) {
                 fd.append(`doctors_${idx}_certificate`, doctorFiles[idx]);
             }
         });
 
-        // Debug log to verify
-        console.log('[Frontend] Sending doctors:', doctorsData);
-        console.log('[Frontend] Certificate files count:', Object.keys(doctorFiles).length);
-
+        console.log('[Medesk] FormData prepared with', formData.doctors.length, 'doctors');
         return fd;
     };
 
     const handleSubmit = async () => {
-        if (!validateStep()) return;
+        if (!validateStep()) {
+            console.log('[Medesk] Validation failed');
+            return;
+        }
 
         setIsSubmitting(true);
         setServerMessage(null);
 
         try {
             const payload = prepareFormDataForApi();
-
-            // Debug: Log all form data entries
-            for (let pair of payload.entries()) {
-                console.log('[FormData]', pair[0], pair[1] instanceof File ? `File: ${pair[1].name}` : pair[1]);
-            }
 
             const response = await fetch(ONBOARDING_CONFIG.post_submission.api_endpoint, {
                 method: 'POST',
@@ -489,7 +484,6 @@ export default function MedeskOnboarding() {
         </div>
     );
 
-    // Clinic info render
     const renderClinicInfo = () => (
         <div className="max-w-2xl mx-auto">
             <div className="mb-10 text-center">
@@ -525,7 +519,6 @@ export default function MedeskOnboarding() {
         </div>
     );
 
-    // Doctors render
     const renderDoctors = () => (
         <div className="max-w-3xl mx-auto">
             <div className="mb-10 text-center">
@@ -559,7 +552,7 @@ export default function MedeskOnboarding() {
                                 file={doctorFiles[idx]}
                                 onFileChange={(file) => setDoctorFiles(prev => ({ ...prev, [idx]: file }))}
                                 error={errors[`doctor_${idx}_file`]}
-                                helpText="Medical Council registration, state registration, or relevant council certificate. Max 10MB, PDF/JPG/PNG"
+                                helpText="Medical Council registration certificate. Max 10MB, PDF/JPG/PNG"
                                 required
                                 maxSize={10}
                             />
@@ -575,7 +568,6 @@ export default function MedeskOnboarding() {
         </div>
     );
 
-    // Business render
     const renderBusiness = () => (
         <div className="max-w-2xl mx-auto">
             <div className="mb-10 text-center"><h1 className="text-4xl font-black uppercase tracking-tight mb-2">Business Information</h1><p className="text-gray-500 font-mono text-sm">Legal details for verification</p></div>
@@ -587,19 +579,18 @@ export default function MedeskOnboarding() {
                 </div>
                 <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Address <span className="text-red-500">*</span></label><textarea rows={3} className={`w-full p-4 bg-gray-50 border-2 ${errors.businessAddress ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.businessAddress} onChange={e => handleFieldChange('businessAddress', e.target.value)} placeholder="Full address with city, state, pin code" />{errors.businessAddress && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessAddress}</p>}</div>
                 <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Business Proof Type <span className="text-red-500">*</span></label><select className={`w-full p-4 bg-gray-50 border-2 ${errors.businessProofType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.businessProofType} onChange={e => handleFieldChange('businessProofType', e.target.value)}><option value="">Select proof type</option>{ONBOARDING_CONFIG.steps[2].fields.find(f => f.id === 'businessProofType').options.map(opt => (<option key={opt}>{opt}</option>))}</select>{errors.businessProofType && <p className="text-red-500 text-xs font-mono mt-1">{errors.businessProofType}</p>}</div>
-                <FileUpload label="Upload Business Proof" file={businessProofFile} onFileChange={setBusinessProofFile} error={errors.businessProofFile} helpText="PAN Card, GST Certificate, Trade License, etc. Max 10MB, PDF/JPG/PNG" required maxSize={10} />
+                <FileUpload label="Upload Business Proof" file={businessProofFile} onFileChange={setBusinessProofFile} error={errors.businessProofFile} helpText="PAN Card, GST Certificate, Trade License. Max 10MB, PDF/JPG/PNG" required maxSize={10} />
             </div>
             <div className="flex justify-between mt-10"><button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">← Back</button><button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">Continue <ArrowRight className="w-4 h-4" /></button></div>
         </div>
     );
 
-    // Clinic proof render
     const renderClinicProof = () => (
         <div className="max-w-2xl mx-auto">
             <div className="mb-10 text-center"><h1 className="text-4xl font-black uppercase tracking-tight mb-2">Medical Clinic Proof</h1><p className="text-gray-500 font-mono text-sm">Verify your clinic's existence</p></div>
             <div className="space-y-6">
                 <div><label className="block text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Document Type <span className="text-red-500">*</span></label><select className={`w-full p-4 bg-gray-50 border-2 ${errors.clinicProofType ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-black transition-all font-mono`} value={formData.clinicProofType} onChange={e => handleFieldChange('clinicProofType', e.target.value)}><option value="">Select document type</option>{ONBOARDING_CONFIG.steps[3].fields.find(f => f.id === 'clinicProofType').options.map(opt => (<option key={opt}>{opt}</option>))}</select>{errors.clinicProofType && <p className="text-red-500 text-xs font-mono mt-1">{errors.clinicProofType}</p>}</div>
-                <FileUpload label="Upload Document" file={clinicProofFile} onFileChange={setClinicProofFile} error={errors.clinicProofFile} helpText="Clinic Registration Certificate, Trade License, Electricity Bill, Rent Agreement, or Property Tax Receipt. Max 10MB, PDF/JPG/PNG" required maxSize={10} />
+                <FileUpload label="Upload Document" file={clinicProofFile} onFileChange={setClinicProofFile} error={errors.clinicProofFile} helpText="Clinic Registration Certificate, Trade License, etc. Max 10MB, PDF/JPG/PNG" required maxSize={10} />
             </div>
             <div className="flex justify-between mt-10"><button onClick={prevStep} className="px-6 py-3 font-mono text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-colors border border-transparent hover:border-gray-200">← Back</button><button onClick={nextStep} className="bg-black hover:bg-gray-800 text-white px-8 py-4 font-mono text-sm uppercase tracking-widest transition-colors flex items-center gap-3">Review Application <ArrowRight className="w-4 h-4" /></button></div>
         </div>
@@ -616,10 +607,11 @@ export default function MedeskOnboarding() {
                         <div className="mt-6 text-left">
                             <h3 className="font-mono font-bold text-sm uppercase tracking-widest mb-3">Next Steps:</h3>
                             <ul className="space-y-2">
-                                <li className="flex items-start gap-2 text-sm font-mono text-gray-600"><Check className="w-4 h-4 text-green-600 mt-0.5" /> Complete payment to activate your account</li>
-                                <li className="flex items-start gap-2 text-sm font-mono text-gray-600"><Check className="w-4 h-4 text-green-600 mt-0.5" /> Check your email for verification link</li>
-                                <li className="flex items-start gap-2 text-sm font-mono text-gray-600"><Check className="w-4 h-4 text-green-600 mt-0.5" /> Check your SMS for OTP verification code</li>
-                                <li className="flex items-start gap-2 text-sm font-mono text-gray-600"><Check className="w-4 h-4 text-green-600 mt-0.5" /> Your account will be activated upon successful verification</li>
+                                {ONBOARDING_CONFIG.post_submission.next_steps.map((step, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-sm font-mono text-gray-600">
+                                        <Check className="w-4 h-4 text-green-600 mt-0.5" /> {step}
+                                    </li>
+                                ))}
                             </ul>
                         </div>
                     </div>
@@ -634,7 +626,6 @@ export default function MedeskOnboarding() {
                     <p className="text-gray-500 font-mono text-sm">Please review all information before proceeding to payment</p>
                 </div>
 
-                {/* Price Summary Card */}
                 <div className="mb-8 border-2 border-black bg-black text-white p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-mono font-bold text-sm uppercase tracking-widest">Order Summary</h3>
