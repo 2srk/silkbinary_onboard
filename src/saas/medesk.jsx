@@ -1,36 +1,26 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-    ArrowRight, ArrowLeft, Loader2, CheckCircle2, Check, X, Upload,
-    Eye, EyeOff, Building2, Stethoscope, FileText, Mail, Phone, MapPin,
-    User, Lock, Shield, AlertCircle, Briefcase, ClipboardList, File, Trash2, Plus, CreditCard,
-    Heart, Sparkles, Star, Award, Clock, Calendar
+    ArrowRight, Loader2, CheckCircle2, Check, X, Upload,
+    Eye, EyeOff, Building2, Stethoscope, Briefcase, Shield, ClipboardList, Lock, File, Plus, CreditCard,
+    Activity, CalendarCheck, Users, MessageCircle
 } from 'lucide-react';
 
-// --- Design System Colors ---
-const colors = {
-    primary: {
-        main: '#2B5B4D',
-        dark: '#1f4439',
-        accent: '#3D7A68',
-        light: '#AEC2BA'
-    },
-    background: {
-        base: '#F9F8F6',
-        surface: '#FFFFFF',
-        subtle: '#F3F4F2'
-    },
-    text: {
-        primary: '#1C2321',
-        secondary: '#4A5552',
-        muted: '#73807B',
-        inverse: '#FFFFFF'
-    },
-    border: '#E2E8E4',
-    semantic: {
-        success: '#10B981',
-        warning: '#F59E0B',
-        info: '#3B82F6'
-    }
+// ==========================================
+// 🎨 BRAND LOGO COMPONENT
+// ==========================================
+const BrandLogo = ({ theme = 'dark', className = '' }) => {
+    const isLight = theme === 'light';
+    return (
+        <div className={`flex items-center justify-center gap-3 ${className}`}>
+            <div className={`w-9 h-9 flex items-center justify-center ${isLight ? 'bg-white text-[#1C2321]' : 'bg-[#2B5B4D] text-[#F9F8F6]'}`}>
+                <Activity className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col text-left">
+                <span className={`font-serif text-2xl tracking-tight leading-none ${isLight ? 'text-white' : 'text-[#1C2321]'}`}>MeDesk</span>
+                <span className={`text-[0.6rem] tracking-[0.15em] font-bold uppercase mt-0.5 ${isLight ? 'text-[#AEC2BA]' : 'text-[#73807B]'}`}>by SilkBinary</span>
+            </div>
+        </div>
+    );
 };
 
 // --- Onboarding Configuration ---
@@ -39,9 +29,9 @@ const ONBOARDING_CONFIG = {
         "question": "Which plan are you signing up for?",
         "type": "url_param",
         "options": {
-            "seed": { "name": "Seed Plan", "price": 999, "max_doctors": 1, "description": "Perfect for solo practitioners", "icon": "🌱" },
-            "bamboo": { "name": "Bamboo Plan", "price": 1499, "max_doctors": 3, "description": "Ideal for small clinics", "icon": "🎋", "popular": true },
-            "banyan": { "name": "Banyan Plan", "price": 2499, "max_doctors": 5, "description": "For growing practices", "icon": "🌳" }
+            "seed": { "name": "The Seed Plan", "price": 999, "max_doctors": 1, "description": "Perfect for solo practitioners starting their digital journey.", "features": ["1 Doctor Account", "Up to 500 appointments/mo", "Standard WhatsApp Notifications", "Basic Patient CRM"] },
+            "bamboo": { "name": "The Bamboo Plan", "price": 1499, "max_doctors": 3, "description": "For established clinics needing more hands on deck.", "features": ["Up to 3 Doctor Accounts", "Unlimited appointments", "Custom Branding (Web Forms)", "Automated WhatsApp Reminders"], "popular": true },
+            "banyan": { "name": "The Banyan Plan", "price": 2499, "max_doctors": 5, "description": "For growing polyclinics needing robust management.", "features": ["Up to 5 Doctor Accounts", "Unlimited appointments", "Custom Branding (Web Forms)", "Custom WhatsApp Number", "Priority Phone Support"] }
         }
     },
     "steps": [
@@ -155,34 +145,34 @@ const FileUpload = ({ label, file, onFileChange, error, helpText, accept = ".pdf
 
     return (
         <div className="space-y-2">
-            <label className="block text-xs font-medium uppercase tracking-wider text-text-secondary">
+            <label className="block text-sm font-medium text-[#1C2321] mb-2">
                 {label} {required && <span className="text-red-500">*</span>}
             </label>
             <div
                 onClick={() => inputRef.current?.click()}
-                className={`border ${error ? 'border-red-500 bg-red-50' : 'border-border bg-background-subtle'} hover:border-primary-main transition-all cursor-pointer rounded-sm`}
+                className={`border bg-[#F9F8F6] transition-all cursor-pointer ${error ? 'border-red-500' : 'border-[#E2E8E4] hover:border-[#2B5B4D]'}`}
             >
                 {file ? (
                     <div className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-3 flex-1">
-                            <File className="w-5 h-5 text-text-muted" />
+                            <File className="w-6 h-6 text-[#2B5B4D]" />
                             <div className="flex-1 text-left">
-                                <p className="text-sm font-body text-text-primary truncate">{file.name}</p>
-                                <p className="text-xs text-text-muted">{formatBytes(file.size)}</p>
+                                <p className="text-sm font-medium text-[#1C2321] truncate">{file.name}</p>
+                                <p className="text-xs text-[#73807B]">{formatBytes(file.size)}</p>
                             </div>
                         </div>
                         <button
                             onClick={(e) => { e.stopPropagation(); onFileChange(null); }}
-                            className="p-1 hover:bg-gray-100 transition-colors rounded-sm"
+                            className="p-2 hover:bg-[#E2E8E4] transition-colors rounded-full"
                         >
-                            <X className="w-4 h-4 text-text-muted" />
+                            <X className="w-4 h-4 text-[#4A5552]" />
                         </button>
                     </div>
                 ) : (
-                    <div className="p-6 text-center">
-                        <Upload className="w-8 h-8 text-text-muted mx-auto mb-2" />
-                        <p className="text-xs font-body text-text-secondary uppercase tracking-wider">Click to upload</p>
-                        <p className="text-[10px] text-text-muted mt-1">PDF, JPG, PNG up to {maxSize}MB</p>
+                    <div className="p-8 text-center">
+                        <Upload className="w-8 h-8 text-[#AEC2BA] mx-auto mb-3" />
+                        <p className="text-sm font-medium text-[#1C2321] uppercase tracking-wider">Click to upload document</p>
+                        <p className="text-xs text-[#73807B] mt-1">PDF, JPG, PNG up to {maxSize}MB</p>
                     </div>
                 )}
                 <input
@@ -193,55 +183,50 @@ const FileUpload = ({ label, file, onFileChange, error, helpText, accept = ".pdf
                     className="hidden"
                 />
             </div>
-            {helpText && <p className="text-[10px] text-text-muted">{helpText}</p>}
-            {error && <p className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" />{error}</p>}
+            {helpText && <p className="text-xs text-[#73807B] mt-2">{helpText}</p>}
+            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
         </div>
     );
 };
 
 // Step Indicator
 const StepIndicator = ({ currentStep, steps, setStep }) => {
-    const stepIcons = [Star, Building2, Stethoscope, Briefcase, Shield, ClipboardList, Lock];
-
     return (
-        <div className="hidden md:flex items-center justify-between max-w-3xl mx-auto mb-12">
-            {steps.map((step, idx) => {
-                const stepNumber = idx + 1;
-                const isActive = currentStep === stepNumber;
-                const isPast = currentStep > stepNumber;
-                const Icon = stepIcons[stepNumber] || Check;
+        <div className="hidden md:block max-w-4xl mx-auto mb-16 relative">
+            <div className="absolute top-5 left-0 w-full h-[2px] bg-[#E2E8E4] -z-10"></div>
+            <div className="flex items-center justify-between">
+                {steps.map((step, idx) => {
+                    const stepNumber = idx + 1;
+                    const isActive = currentStep === stepNumber;
+                    const isPast = currentStep > stepNumber;
 
-                return (
-                    <React.Fragment key={step}>
-                        <div className="flex flex-col items-center relative">
+                    return (
+                        <div key={step} className="flex flex-col items-center">
                             <button
                                 onClick={() => isPast && setStep(stepNumber)}
                                 disabled={!isPast}
-                                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                                    isActive ? 'bg-primary-main text-white shadow-sm' :
-                                        isPast ? 'bg-primary-light/30 text-primary-main cursor-pointer hover:bg-primary-light/50' :
-                                            'bg-background-subtle text-text-muted cursor-not-allowed'
+                                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
+                                    isActive ? 'bg-[#2B5B4D] text-white' :
+                                        isPast ? 'bg-[#AEC2BA] text-white cursor-pointer hover:bg-[#2B5B4D]' :
+                                            'bg-[#F9F8F6] text-[#73807B] border-2 border-[#E2E8E4] cursor-not-allowed'
                                 }`}
                             >
-                                {isPast ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                                {isPast ? <Check className="w-5 h-5" /> : stepNumber}
                             </button>
-                            <span className={`absolute top-12 text-xs font-body whitespace-nowrap ${isActive ? 'text-primary-main font-medium' : 'text-text-muted'}`}>
+                            <span className={`mt-3 text-xs font-bold tracking-wider uppercase ${isActive ? 'text-[#1C2321]' : 'text-[#73807B]'}`}>
                                 {step}
                             </span>
                         </div>
-                        {idx < steps.length - 1 && (
-                            <div className={`flex-1 h-[1px] mx-4 transition-all ${currentStep > stepNumber ? 'bg-primary-main' : 'bg-border'}`} />
-                        )}
-                    </React.Fragment>
-                );
-            })}
+                    );
+                })}
+            </div>
         </div>
     );
 };
 
 // Main Component
 export default function MedeskOnboarding() {
-    const steps = ["Plan", "Clinic", "Doctors", "Business", "Verification", "Review", "Account"];
+    const steps = ["Plan", "Clinic", "Doctors", "Business", "Verify", "Review", "Account"];
     const [currentStep, setCurrentStep] = useState(1);
     const [selectedPlanKey, setSelectedPlanKey] = useState(null);
     const [formData, setFormData] = useState({
@@ -267,18 +252,15 @@ export default function MedeskOnboarding() {
     const maxDoctors = selectedPlan ? selectedPlan.max_doctors : 1;
     const planPrice = selectedPlan ? selectedPlan.price : 0;
 
-    // URL param handling - skip plan selection if plan is provided
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const planFromUrl = params.get('plan');
         if (planFromUrl && ONBOARDING_CONFIG.plan_selection.options[planFromUrl]) {
             setSelectedPlanKey(planFromUrl);
-            // Skip plan selection step, go directly to clinic information
             setCurrentStep(2);
         }
     }, []);
 
-    // Initialize doctors when plan is selected
     useEffect(() => {
         if (selectedPlanKey && formData.doctors.length === 0) {
             setFormData(prev => ({ ...prev, doctors: [] }));
@@ -404,7 +386,6 @@ export default function MedeskOnboarding() {
 
     const prepareFormDataForApi = () => {
         const fd = new FormData();
-
         fd.append('plan', selectedPlanKey);
         fd.append('clinicName', formData.clinicName);
         fd.append('clinicType', formData.clinicType === 'Other' ? formData.otherClinicType : formData.clinicType);
@@ -439,13 +420,11 @@ export default function MedeskOnboarding() {
 
     const handleSubmit = async () => {
         if (!validateStep()) return;
-
         setIsSubmitting(true);
         setServerMessage(null);
 
         try {
             const payload = prepareFormDataForApi();
-
             const response = await fetch(ONBOARDING_CONFIG.post_submission.api_endpoint, {
                 method: 'POST',
                 body: payload,
@@ -489,176 +468,202 @@ export default function MedeskOnboarding() {
 
     // Plan Selection Render
     const renderPlanSelection = () => (
-        <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary-light/20 rounded-full mb-4">
-                    <Sparkles className="w-4 h-4 text-primary-main" />
-                    <span className="text-xs font-medium text-primary-main uppercase tracking-wider">Choose your plan</span>
+        <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+                <h1 className="font-serif text-5xl md:text-6xl text-[#1C2321] mb-6">Honest, sustainable pricing.</h1>
+                <p className="text-[#4A5552] text-xl max-w-2xl mx-auto font-light">Select the perfect plan for your practice. All plans include core features and dedicated support.</p>
+            </div>
+
+            {errors.plan && <p className="text-red-500 text-sm text-center mb-6 font-bold uppercase tracking-widest">{errors.plan}</p>}
+
+            <div className="grid lg:grid-cols-3 gap-8">
+                {/* Seed Plan */}
+                <div onClick={() => setSelectedPlanKey('seed')} className={`cursor-pointer transition-all border p-10 relative bg-white flex flex-col shadow-sm text-[#1C2321] ${selectedPlanKey === 'seed' ? 'border-[#2B5B4D] ring-2 ring-[#2B5B4D] ring-offset-2' : 'border-[#E2E8E4] hover:border-[#2B5B4D]'}`}>
+                    <div className="mb-8">
+                        <h3 className="font-serif text-2xl mb-2">{ONBOARDING_CONFIG.plan_selection.options.seed.name}</h3>
+                        <p className="text-[#73807B] text-sm h-10">{ONBOARDING_CONFIG.plan_selection.options.seed.description}</p>
+                    </div>
+                    <div className="mb-8">
+                        <span className="text-4xl font-serif">₹{ONBOARDING_CONFIG.plan_selection.options.seed.price}</span>
+                        <span className="text-[#73807B]"> / year</span>
+                    </div>
+                    <ul className="space-y-4 mb-10 text-[#4A5552] flex-grow">
+                        {ONBOARDING_CONFIG.plan_selection.options.seed.features.map((feat, i) => (
+                            <li key={i} className="flex items-start gap-3"><Check className="w-5 h-5 text-[#2B5B4D] shrink-0" /> {feat}</li>
+                        ))}
+                    </ul>
+                    <div className={`w-full py-4 text-center font-medium transition-colors border mt-auto ${selectedPlanKey === 'seed' ? 'bg-[#2B5B4D] text-white border-[#2B5B4D]' : 'border-[#2B5B4D] text-[#2B5B4D]'}`}>
+                        {selectedPlanKey === 'seed' ? 'Selected' : 'Select Seed'}
+                    </div>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-serif text-text-primary mb-4">Simple, transparent pricing</h1>
-                <p className="text-lg text-text-secondary max-w-2xl mx-auto">Select the perfect plan for your practice. All plans include core features and dedicated support.</p>
+
+                {/* Bamboo Plan */}
+                <div onClick={() => setSelectedPlanKey('bamboo')} className={`cursor-pointer transition-all border p-10 relative bg-[#2B5B4D] text-white shadow-xl flex flex-col z-10 scale-105 ${selectedPlanKey === 'bamboo' ? 'ring-2 ring-[#1C2321] ring-offset-2 border-[#1C2321]' : 'border-[#2B5B4D]'}`}>
+                    <div className="absolute top-0 right-0 bg-[#E2E8E4] text-[#1C2321] text-xs font-bold uppercase tracking-widest px-3 py-1">
+                        Recommended
+                    </div>
+                    <div className="mb-8 mt-2">
+                        <h3 className="font-serif text-2xl mb-2">{ONBOARDING_CONFIG.plan_selection.options.bamboo.name}</h3>
+                        <p className="text-[#AEC2BA] text-sm h-10">{ONBOARDING_CONFIG.plan_selection.options.bamboo.description}</p>
+                    </div>
+                    <div className="mb-8">
+                        <span className="text-4xl font-serif">₹{ONBOARDING_CONFIG.plan_selection.options.bamboo.price}</span>
+                        <span className="text-[#AEC2BA]"> / year</span>
+                    </div>
+                    <ul className="space-y-4 mb-10 text-[#E2E8E4] flex-grow">
+                        {ONBOARDING_CONFIG.plan_selection.options.bamboo.features.map((feat, i) => (
+                            <li key={i} className="flex items-start gap-3"><Check className="w-5 h-5 text-[#AEC2BA] shrink-0" /> {feat}</li>
+                        ))}
+                    </ul>
+                    <div className={`w-full py-4 text-center font-medium transition-colors mt-auto ${selectedPlanKey === 'bamboo' ? 'bg-[#1C2321] text-white' : 'bg-white text-[#2B5B4D]'}`}>
+                        {selectedPlanKey === 'bamboo' ? 'Selected' : 'Select Bamboo'}
+                    </div>
+                </div>
+
+                {/* Banyan Plan */}
+                <div onClick={() => setSelectedPlanKey('banyan')} className={`cursor-pointer transition-all border p-10 relative bg-[#1C2321] text-white shadow-lg flex flex-col ${selectedPlanKey === 'banyan' ? 'ring-2 ring-[#2B5B4D] ring-offset-2 border-[#2B5B4D]' : 'border-[#1C2321]'}`}>
+                    <div className="mb-8">
+                        <h3 className="font-serif text-2xl mb-2">{ONBOARDING_CONFIG.plan_selection.options.banyan.name}</h3>
+                        <p className="text-[#73807B] text-sm h-10">{ONBOARDING_CONFIG.plan_selection.options.banyan.description}</p>
+                    </div>
+                    <div className="mb-8">
+                        <span className="text-4xl font-serif">₹{ONBOARDING_CONFIG.plan_selection.options.banyan.price}</span>
+                        <span className="text-[#73807B]"> / year</span>
+                    </div>
+                    <ul className="space-y-4 mb-10 text-[#E2E8E4] flex-grow">
+                        {ONBOARDING_CONFIG.plan_selection.options.banyan.features.map((feat, i) => (
+                            <li key={i} className="flex items-start gap-3"><Check className="w-5 h-5 text-[#73807B] shrink-0" /> {feat}</li>
+                        ))}
+                    </ul>
+                    <div className={`w-full py-4 text-center font-medium transition-colors border mt-auto ${selectedPlanKey === 'banyan' ? 'bg-white text-[#1C2321] border-white' : 'border-[#73807B] text-[#E2E8E4]'}`}>
+                        {selectedPlanKey === 'banyan' ? 'Selected' : 'Select Banyan'}
+                    </div>
+                </div>
             </div>
 
-            {errors.plan && <p className="text-red-500 text-sm text-center mb-6">{errors.plan}</p>}
-
-            <div className="grid md:grid-cols-3 gap-6">
-                {Object.entries(ONBOARDING_CONFIG.plan_selection.options).map(([key, plan]) => {
-                    const isSelected = selectedPlanKey === key;
-                    return (
-                        <div
-                            key={key}
-                            onClick={() => setSelectedPlanKey(key)}
-                            className={`relative rounded-sm border transition-all cursor-pointer p-6 ${
-                                isSelected ? 'border-primary-main bg-white shadow-sm' : 'border-border bg-white hover:border-primary-light'
-                            }`}
-                        >
-                            {plan.popular && (
-                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-main text-white text-xs px-3 py-1 rounded-full">
-                                    Most Popular
-                                </div>
-                            )}
-                            <div className="text-center mb-4">
-                                <span className="text-4xl mb-2 block">{plan.icon}</span>
-                                <h3 className="text-xl font-serif font-medium text-text-primary">{plan.name}</h3>
-                                <p className="text-sm text-text-muted mt-1">{plan.description}</p>
-                            </div>
-                            <div className="text-center mb-4">
-                                <span className="text-3xl font-bold text-text-primary">₹{plan.price}</span>
-                                <span className="text-text-muted">/year</span>
-                            </div>
-                            <div className="text-center text-sm text-text-secondary mb-6">
-                                Up to {plan.max_doctors} doctor{plan.max_doctors > 1 ? 's' : ''}
-                            </div>
-                            <button
-                                className={`w-full py-3 text-center font-medium transition-all rounded-sm ${
-                                    isSelected
-                                        ? 'bg-primary-main text-white'
-                                        : 'border border-primary-main text-primary-main hover:bg-primary-main hover:text-white'
-                                }`}
-                            >
-                                {isSelected ? 'Selected' : 'Select Plan'}
-                            </button>
-                        </div>
-                    );
-                })}
-            </div>
-
-            <div className="flex justify-end mt-10">
-                <button onClick={nextStep} disabled={!selectedPlanKey} className="bg-primary-main hover:bg-primary-dark text-white px-8 py-3 font-medium transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                    Continue to Clinic <ArrowRight className="w-4 h-4" />
+            <div className="flex justify-end mt-12">
+                <button onClick={nextStep} disabled={!selectedPlanKey} className="bg-[#2B5B4D] text-white px-8 py-4 font-medium hover:bg-[#1f4439] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    Continue to Clinic <ArrowRight size={18} />
                 </button>
             </div>
         </div>
     );
 
+    // Section Header Helper
+    const SectionHeader = ({ icon: Icon, title, subtitle }) => (
+        <div className="text-center mb-12">
+            <div className="w-16 h-16 bg-[#2B5B4D] flex items-center justify-center mb-6 mx-auto">
+                <Icon className="text-white w-8 h-8" />
+            </div>
+            <h2 className="font-serif text-4xl md:text-5xl text-[#1C2321] mb-4">{title}</h2>
+            <p className="text-lg text-[#4A5552] font-light max-w-xl mx-auto leading-relaxed">{subtitle}</p>
+        </div>
+    );
+
     // Clinic Information Render
     const renderClinicInfo = () => (
-        <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-10">
-                <div className="inline-flex p-3 bg-primary-light/20 rounded-full mb-4">
-                    <Building2 className="w-6 h-6 text-primary-main" />
-                </div>
-                <h2 className="text-3xl md:text-4xl font-serif text-text-primary mb-2">Clinic Information</h2>
-                <p className="text-text-secondary">Tell us about your practice</p>
-            </div>
+        <div className="max-w-3xl mx-auto">
+            <SectionHeader icon={Building2} title="Clinic Information" subtitle="Tell us about your practice. This information will be used to customize your front desk experience." />
 
-            <div className="space-y-6">
-                <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Name of the Clinic <span className="text-red-500">*</span></label>
-                    <input
-                        type="text"
-                        className={`w-full px-4 py-3 bg-background-subtle border ${errors.clinicName ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`}
-                        value={formData.clinicName}
-                        onChange={e => handleFieldChange('clinicName', e.target.value)}
-                        placeholder="e.g., City Care Medical Center"
-                    />
-                    {errors.clinicName && <p className="text-red-500 text-xs mt-1">{errors.clinicName}</p>}
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Type of Clinic <span className="text-red-500">*</span></label>
-                    <select
-                        className={`w-full px-4 py-3 bg-background-subtle border ${errors.clinicType ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`}
-                        value={formData.clinicType}
-                        onChange={e => handleFieldChange('clinicType', e.target.value)}
-                    >
-                        <option value="">Select clinic type</option>
-                        {ONBOARDING_CONFIG.steps[0].fields.find(f => f.id === 'clinicType').options.map(opt => (<option key={opt}>{opt}</option>))}
-                    </select>
-                    {errors.clinicType && <p className="text-red-500 text-xs mt-1">{errors.clinicType}</p>}
-                </div>
-
-                {formData.clinicType === 'Other' && (
+            <div className="bg-white border border-[#E2E8E4] p-8 md:p-12 shadow-sm">
+                <div className="space-y-8">
                     <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">Please specify clinic type <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-medium text-[#1C2321] mb-2">Name of the Clinic <span className="text-red-500">*</span></label>
                         <input
                             type="text"
-                            className={`w-full px-4 py-3 bg-background-subtle border ${errors.otherClinicType ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`}
-                            value={formData.otherClinicType}
-                            onChange={e => handleFieldChange('otherClinicType', e.target.value)}
-                            placeholder="Enter clinic type"
+                            className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors.clinicName ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`}
+                            value={formData.clinicName}
+                            onChange={e => handleFieldChange('clinicName', e.target.value)}
+                            placeholder="e.g., City Care Medical Center"
                         />
-                        {errors.otherClinicType && <p className="text-red-500 text-xs mt-1">{errors.otherClinicType}</p>}
+                        {errors.clinicName && <p className="text-red-500 text-xs mt-2">{errors.clinicName}</p>}
                     </div>
-                )}
+
+                    <div>
+                        <label className="block text-sm font-medium text-[#1C2321] mb-2">Type of Clinic <span className="text-red-500">*</span></label>
+                        <select
+                            className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors.clinicType ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`}
+                            value={formData.clinicType}
+                            onChange={e => handleFieldChange('clinicType', e.target.value)}
+                        >
+                            <option value="">Select clinic type</option>
+                            {ONBOARDING_CONFIG.steps[0].fields.find(f => f.id === 'clinicType').options.map(opt => (<option key={opt}>{opt}</option>))}
+                        </select>
+                        {errors.clinicType && <p className="text-red-500 text-xs mt-2">{errors.clinicType}</p>}
+                    </div>
+
+                    {formData.clinicType === 'Other' && (
+                        <div>
+                            <label className="block text-sm font-medium text-[#1C2321] mb-2">Please specify clinic type <span className="text-red-500">*</span></label>
+                            <input
+                                type="text"
+                                className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors.otherClinicType ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`}
+                                value={formData.otherClinicType}
+                                onChange={e => handleFieldChange('otherClinicType', e.target.value)}
+                                placeholder="Enter clinic type"
+                            />
+                            {errors.otherClinicType && <p className="text-red-500 text-xs mt-2">{errors.otherClinicType}</p>}
+                        </div>
+                    )}
+                </div>
             </div>
 
-            <div className="flex justify-between mt-10">
-                <button onClick={prevStep} className="px-6 py-3 text-text-secondary hover:text-primary-main transition-colors flex items-center gap-2">← Back</button>
-                <button onClick={nextStep} className="bg-primary-main hover:bg-primary-dark text-white px-8 py-3 font-medium transition-all rounded-sm flex items-center gap-2">Continue <ArrowRight className="w-4 h-4" /></button>
+            <div className="flex justify-between items-center mt-8">
+                <button onClick={prevStep} className="px-6 py-4 text-[#4A5552] font-medium hover:text-[#1C2321] transition-colors flex items-center gap-2">
+                    ← Back
+                </button>
+                <button onClick={nextStep} className="bg-[#2B5B4D] text-white px-8 py-4 font-medium hover:bg-[#1f4439] transition-colors flex items-center gap-2">
+                    Continue <ArrowRight size={18} />
+                </button>
             </div>
         </div>
     );
 
     // Doctors Render
     const renderDoctors = () => (
-        <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-10">
-                <div className="inline-flex p-3 bg-primary-light/20 rounded-full mb-4">
-                    <Stethoscope className="w-6 h-6 text-primary-main" />
-                </div>
-                <h2 className="text-3xl md:text-4xl font-serif text-text-primary mb-2">Doctor Information</h2>
-                <p className="text-text-secondary">Based on your selected plan, you can add up to {maxDoctors} doctor(s)</p>
-            </div>
+        <div className="max-w-4xl mx-auto">
+            <SectionHeader icon={Stethoscope} title="Doctor Profiles" subtitle={`Based on the ${selectedPlan?.name}, you can add up to ${maxDoctors} doctor(s) to your account.`} />
 
             {errors.doctorsEmpty && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 text-sm flex items-center gap-2 rounded-sm">
-                    <AlertCircle className="w-4 h-4" /> {errors.doctorsEmpty}
+                <div className="mb-8 p-4 bg-red-50 border border-red-200 text-red-600 text-sm flex items-center gap-2">
+                    <X className="w-5 h-5" /> {errors.doctorsEmpty}
                 </div>
             )}
 
             <div className="space-y-8">
                 {formData.doctors.map((doctor, idx) => (
-                    <div key={doctor.id} className="border border-border rounded-sm p-6 relative bg-white">
+                    <div key={doctor.id} className="bg-white border border-[#E2E8E4] p-8 md:p-12 relative shadow-sm">
                         {idx > 0 && (
-                            <button onClick={() => removeDoctor(idx)} className="absolute top-4 right-4 p-1 hover:bg-gray-100 transition-colors rounded-sm">
-                                <X className="w-4 h-4 text-text-muted" />
+                            <button onClick={() => removeDoctor(idx)} className="absolute top-6 right-6 p-2 hover:bg-[#E2E8E4] transition-colors rounded-full text-[#4A5552]">
+                                <X className="w-5 h-5" />
                             </button>
                         )}
-                        <h3 className="font-medium text-text-primary mb-4">Doctor {idx + 1}</h3>
+                        <h3 className="font-serif text-2xl text-[#1C2321] mb-8 border-b border-[#E2E8E4] pb-4">Doctor {idx + 1}</h3>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Doctor's Name <span className="text-red-500">*</span></label>
-                                <input type="text" className={`w-full px-4 py-3 bg-background-subtle border ${errors[`doctor_${idx}_name`] ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`} value={doctor.doctorName} onChange={e => updateDoctor(idx, 'doctorName', e.target.value)} placeholder="Full name as per medical registration" />
-                                {errors[`doctor_${idx}_name`] && <p className="text-red-500 text-xs mt-1">{errors[`doctor_${idx}_name`]}</p>}
+                        <div className="grid md:grid-cols-2 gap-8 mb-8">
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-[#1C2321] mb-2">Doctor's Name <span className="text-red-500">*</span></label>
+                                <input type="text" className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors[`doctor_${idx}_name`] ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={doctor.doctorName} onChange={e => updateDoctor(idx, 'doctorName', e.target.value)} placeholder="Full name as per medical registration" />
+                                {errors[`doctor_${idx}_name`] && <p className="text-red-500 text-xs mt-2">{errors[`doctor_${idx}_name`]}</p>}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Specialty <span className="text-red-500">*</span></label>
-                                <select className={`w-full px-4 py-3 bg-background-subtle border ${errors[`doctor_${idx}_specialty`] ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`} value={doctor.doctorSpecialty} onChange={e => updateDoctor(idx, 'doctorSpecialty', e.target.value)}>
+                                <label className="block text-sm font-medium text-[#1C2321] mb-2">Specialty <span className="text-red-500">*</span></label>
+                                <select className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors[`doctor_${idx}_specialty`] ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={doctor.doctorSpecialty} onChange={e => updateDoctor(idx, 'doctorSpecialty', e.target.value)}>
                                     <option value="">Select specialty</option>
                                     {ONBOARDING_CONFIG.steps[1].fields.find(f => f.id === 'doctorSpecialty').options.map(opt => (<option key={opt}>{opt}</option>))}
                                 </select>
-                                {errors[`doctor_${idx}_specialty`] && <p className="text-red-500 text-xs mt-1">{errors[`doctor_${idx}_specialty`]}</p>}
+                                {errors[`doctor_${idx}_specialty`] && <p className="text-red-500 text-xs mt-2">{errors[`doctor_${idx}_specialty`]}</p>}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Phone Number <span className="text-red-500">*</span></label>
-                                <input type="tel" className={`w-full px-4 py-3 bg-background-subtle border ${errors[`doctor_${idx}_phone`] ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`} value={doctor.doctorPhone} onChange={e => updateDoctor(idx, 'doctorPhone', e.target.value)} placeholder="10-digit mobile number" />
-                                {errors[`doctor_${idx}_phone`] && <p className="text-red-500 text-xs mt-1">{errors[`doctor_${idx}_phone`]}</p>}
+                                <label className="block text-sm font-medium text-[#1C2321] mb-2">Phone Number <span className="text-red-500">*</span></label>
+                                <input type="tel" className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors[`doctor_${idx}_phone`] ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={doctor.doctorPhone} onChange={e => updateDoctor(idx, 'doctorPhone', e.target.value)} placeholder="10-digit mobile number" />
+                                {errors[`doctor_${idx}_phone`] && <p className="text-red-500 text-xs mt-2">{errors[`doctor_${idx}_phone`]}</p>}
                             </div>
+                        </div>
 
+                        <div className="pt-4">
                             <FileUpload
                                 label="Registration Certificate"
                                 file={doctorFiles[idx]}
@@ -674,187 +679,182 @@ export default function MedeskOnboarding() {
             </div>
 
             {formData.doctors.length < maxDoctors && (
-                <button onClick={addDoctor} className="mt-6 w-full py-4 border-2 border-dashed border-border text-text-secondary hover:text-primary-main hover:border-primary-main transition-all rounded-sm flex items-center justify-center gap-2">
-                    <Plus className="w-4 h-4" /> Add Another Doctor
+                <button onClick={addDoctor} className="mt-8 w-full py-6 border border-dashed border-[#AEC2BA] text-[#4A5552] hover:text-[#2B5B4D] hover:border-[#2B5B4D] transition-colors flex items-center justify-center gap-3 bg-white font-medium">
+                    <Plus className="w-5 h-5" /> Add Another Doctor
                 </button>
             )}
 
-            <div className="flex justify-between mt-10">
-                <button onClick={prevStep} className="px-6 py-3 text-text-secondary hover:text-primary-main transition-colors flex items-center gap-2">← Back</button>
-                <button onClick={nextStep} className="bg-primary-main hover:bg-primary-dark text-white px-8 py-3 font-medium transition-all rounded-sm flex items-center gap-2">Continue <ArrowRight className="w-4 h-4" /></button>
+            <div className="flex justify-between items-center mt-12">
+                <button onClick={prevStep} className="px-6 py-4 text-[#4A5552] font-medium hover:text-[#1C2321] transition-colors flex items-center gap-2">
+                    ← Back
+                </button>
+                <button onClick={nextStep} className="bg-[#2B5B4D] text-white px-8 py-4 font-medium hover:bg-[#1f4439] transition-colors flex items-center gap-2">
+                    Continue <ArrowRight size={18} />
+                </button>
             </div>
         </div>
     );
 
     // Business Render
     const renderBusiness = () => (
-        <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-10">
-                <div className="inline-flex p-3 bg-primary-light/20 rounded-full mb-4">
-                    <Briefcase className="w-6 h-6 text-primary-main" />
-                </div>
-                <h2 className="text-3xl md:text-4xl font-serif text-text-primary mb-2">Business Information</h2>
-                <p className="text-text-secondary">Legal details for verification</p>
-            </div>
+        <div className="max-w-3xl mx-auto">
+            <SectionHeader icon={Briefcase} title="Business Verification" subtitle="We need some legal details to verify your entity before establishing the clinic dashboard." />
 
-            <div className="space-y-6">
-                <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Business / Clinic Name <span className="text-red-500">*</span></label>
-                    <input type="text" className={`w-full px-4 py-3 bg-background-subtle border ${errors.businessName ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`} value={formData.businessName} onChange={e => handleFieldChange('businessName', e.target.value)} placeholder="Legal name of the business entity" />
-                    {errors.businessName && <p className="text-red-500 text-xs mt-1">{errors.businessName}</p>}
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-white border border-[#E2E8E4] p-8 md:p-12 shadow-sm">
+                <div className="space-y-8">
                     <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">Phone Number <span className="text-red-500">*</span></label>
-                        <input type="tel" className={`w-full px-4 py-3 bg-background-subtle border ${errors.businessPhone ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`} value={formData.businessPhone} onChange={e => handleFieldChange('businessPhone', e.target.value)} placeholder="10-digit mobile number" />
-                        {errors.businessPhone && <p className="text-red-500 text-xs mt-1">{errors.businessPhone}</p>}
+                        <label className="block text-sm font-medium text-[#1C2321] mb-2">Business / Clinic Name <span className="text-red-500">*</span></label>
+                        <input type="text" className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors.businessName ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={formData.businessName} onChange={e => handleFieldChange('businessName', e.target.value)} placeholder="Legal name of the business entity" />
+                        {errors.businessName && <p className="text-red-500 text-xs mt-2">{errors.businessName}</p>}
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <label className="block text-sm font-medium text-[#1C2321] mb-2">Official Phone Number <span className="text-red-500">*</span></label>
+                            <input type="tel" className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors.businessPhone ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={formData.businessPhone} onChange={e => handleFieldChange('businessPhone', e.target.value)} placeholder="10-digit mobile number" />
+                            {errors.businessPhone && <p className="text-red-500 text-xs mt-2">{errors.businessPhone}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-[#1C2321] mb-2">Support Email Address <span className="text-red-500">*</span></label>
+                            <input type="email" className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors.businessEmail ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={formData.businessEmail} onChange={e => handleFieldChange('businessEmail', e.target.value)} placeholder="clinic@example.com" />
+                            {errors.businessEmail && <p className="text-red-500 text-xs mt-2">{errors.businessEmail}</p>}
+                        </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">Email Address <span className="text-red-500">*</span></label>
-                        <input type="email" className={`w-full px-4 py-3 bg-background-subtle border ${errors.businessEmail ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`} value={formData.businessEmail} onChange={e => handleFieldChange('businessEmail', e.target.value)} placeholder="clinic@example.com" />
-                        {errors.businessEmail && <p className="text-red-500 text-xs mt-1">{errors.businessEmail}</p>}
+                        <label className="block text-sm font-medium text-[#1C2321] mb-2">Complete Address <span className="text-red-500">*</span></label>
+                        <textarea rows={3} className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors.businessAddress ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={formData.businessAddress} onChange={e => handleFieldChange('businessAddress', e.target.value)} placeholder="Full address with city, state, pin code" />
+                        {errors.businessAddress && <p className="text-red-500 text-xs mt-2">{errors.businessAddress}</p>}
+                    </div>
+
+                    <div className="pt-4 border-t border-[#E2E8E4]">
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-[#1C2321] mb-2">Business Proof Type <span className="text-red-500">*</span></label>
+                            <select className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors.businessProofType ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={formData.businessProofType} onChange={e => handleFieldChange('businessProofType', e.target.value)}>
+                                <option value="">Select proof type</option>
+                                {ONBOARDING_CONFIG.steps[2].fields.find(f => f.id === 'businessProofType').options.map(opt => (<option key={opt}>{opt}</option>))}
+                            </select>
+                            {errors.businessProofType && <p className="text-red-500 text-xs mt-2">{errors.businessProofType}</p>}
+                        </div>
+
+                        <FileUpload label="Upload Business Proof" file={businessProofFile} onFileChange={setBusinessProofFile} error={errors.businessProofFile} helpText="PAN Card, GST Certificate, Trade License. Max 10MB, PDF/JPG/PNG" required maxSize={10} />
                     </div>
                 </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Address <span className="text-red-500">*</span></label>
-                    <textarea rows={3} className={`w-full px-4 py-3 bg-background-subtle border ${errors.businessAddress ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`} value={formData.businessAddress} onChange={e => handleFieldChange('businessAddress', e.target.value)} placeholder="Full address with city, state, pin code" />
-                    {errors.businessAddress && <p className="text-red-500 text-xs mt-1">{errors.businessAddress}</p>}
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Business Proof Type <span className="text-red-500">*</span></label>
-                    <select className={`w-full px-4 py-3 bg-background-subtle border ${errors.businessProofType ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`} value={formData.businessProofType} onChange={e => handleFieldChange('businessProofType', e.target.value)}>
-                        <option value="">Select proof type</option>
-                        {ONBOARDING_CONFIG.steps[2].fields.find(f => f.id === 'businessProofType').options.map(opt => (<option key={opt}>{opt}</option>))}
-                    </select>
-                    {errors.businessProofType && <p className="text-red-500 text-xs mt-1">{errors.businessProofType}</p>}
-                </div>
-
-                <FileUpload label="Upload Business Proof" file={businessProofFile} onFileChange={setBusinessProofFile} error={errors.businessProofFile} helpText="PAN Card, GST Certificate, Trade License. Max 10MB, PDF/JPG/PNG" required maxSize={10} />
             </div>
 
-            <div className="flex justify-between mt-10">
-                <button onClick={prevStep} className="px-6 py-3 text-text-secondary hover:text-primary-main transition-colors flex items-center gap-2">← Back</button>
-                <button onClick={nextStep} className="bg-primary-main hover:bg-primary-dark text-white px-8 py-3 font-medium transition-all rounded-sm flex items-center gap-2">Continue <ArrowRight className="w-4 h-4" /></button>
+            <div className="flex justify-between mt-12">
+                <button onClick={prevStep} className="px-6 py-4 text-[#4A5552] font-medium hover:text-[#1C2321] transition-colors flex items-center gap-2">← Back</button>
+                <button onClick={nextStep} className="bg-[#2B5B4D] text-white px-8 py-4 font-medium hover:bg-[#1f4439] transition-colors flex items-center gap-2">Continue <ArrowRight size={18} /></button>
             </div>
         </div>
     );
 
     // Clinic Verification Render
     const renderClinicVerification = () => (
-        <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-10">
-                <div className="inline-flex p-3 bg-primary-light/20 rounded-full mb-4">
-                    <Shield className="w-6 h-6 text-primary-main" />
+        <div className="max-w-3xl mx-auto">
+            <SectionHeader icon={Shield} title="Clinic Documentation" subtitle="Upload secondary documentation to establish the physical existence of your practice." />
+
+            <div className="bg-white border border-[#E2E8E4] p-8 md:p-12 shadow-sm">
+                <div className="space-y-8">
+                    <div>
+                        <label className="block text-sm font-medium text-[#1C2321] mb-2">Document Type <span className="text-red-500">*</span></label>
+                        <select className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors.clinicProofType ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={formData.clinicProofType} onChange={e => handleFieldChange('clinicProofType', e.target.value)}>
+                            <option value="">Select document type</option>
+                            {ONBOARDING_CONFIG.steps[3].fields.find(f => f.id === 'clinicProofType').options.map(opt => (<option key={opt}>{opt}</option>))}
+                        </select>
+                        {errors.clinicProofType && <p className="text-red-500 text-xs mt-2">{errors.clinicProofType}</p>}
+                    </div>
+
+                    <FileUpload label="Upload Document" file={clinicProofFile} onFileChange={setClinicProofFile} error={errors.clinicProofFile} helpText="Clinic Registration Certificate, Trade License, etc. Max 10MB, PDF/JPG/PNG" required maxSize={10} />
                 </div>
-                <h2 className="text-3xl md:text-4xl font-serif text-text-primary mb-2">Clinic Verification</h2>
-                <p className="text-text-secondary">Verify your clinic's existence</p>
             </div>
 
-            <div className="space-y-6">
-                <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Document Type <span className="text-red-500">*</span></label>
-                    <select className={`w-full px-4 py-3 bg-background-subtle border ${errors.clinicProofType ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`} value={formData.clinicProofType} onChange={e => handleFieldChange('clinicProofType', e.target.value)}>
-                        <option value="">Select document type</option>
-                        {ONBOARDING_CONFIG.steps[3].fields.find(f => f.id === 'clinicProofType').options.map(opt => (<option key={opt}>{opt}</option>))}
-                    </select>
-                    {errors.clinicProofType && <p className="text-red-500 text-xs mt-1">{errors.clinicProofType}</p>}
-                </div>
-
-                <FileUpload label="Upload Document" file={clinicProofFile} onFileChange={setClinicProofFile} error={errors.clinicProofFile} helpText="Clinic Registration Certificate, Trade License, etc. Max 10MB, PDF/JPG/PNG" required maxSize={10} />
-            </div>
-
-            <div className="flex justify-between mt-10">
-                <button onClick={prevStep} className="px-6 py-3 text-text-secondary hover:text-primary-main transition-colors flex items-center gap-2">← Back</button>
-                <button onClick={nextStep} className="bg-primary-main hover:bg-primary-dark text-white px-8 py-3 font-medium transition-all rounded-sm flex items-center gap-2">Review & Pay <ArrowRight className="w-4 h-4" /></button>
+            <div className="flex justify-between mt-12">
+                <button onClick={prevStep} className="px-6 py-4 text-[#4A5552] font-medium hover:text-[#1C2321] transition-colors flex items-center gap-2">← Back</button>
+                <button onClick={nextStep} className="bg-[#2B5B4D] text-white px-8 py-4 font-medium hover:bg-[#1f4439] transition-colors flex items-center gap-2">Review Application <ArrowRight size={18} /></button>
             </div>
         </div>
     );
 
     // Review Render
     const renderReview = () => (
-        <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-10">
-                <div className="inline-flex p-3 bg-primary-light/20 rounded-full mb-4">
-                    <ClipboardList className="w-6 h-6 text-primary-main" />
-                </div>
-                <h2 className="text-3xl md:text-4xl font-serif text-text-primary mb-2">Review Your Application</h2>
-                <p className="text-text-secondary">Please review all information before creating your account</p>
-            </div>
+        <div className="max-w-4xl mx-auto">
+            <SectionHeader icon={ClipboardList} title="Final Review" subtitle="Please ensure all provided details are accurate. Your platform is almost ready." />
 
             {/* Price Summary Card */}
-            <div className="mb-8 border border-primary-main bg-primary-main/5 p-6 rounded-sm">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-text-primary">Order Summary</h3>
-                    <CreditCard className="w-5 h-5 text-primary-main" />
+            <div className="mb-10 border border-[#2B5B4D] bg-[#2B5B4D] text-white p-8 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                    <Activity className="w-32 h-32" />
                 </div>
-                <div className="flex justify-between items-end">
+                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     <div>
-                        <p className="text-sm text-text-muted">Total Amount</p>
-                        <p className="text-3xl font-bold text-text-primary">₹{planPrice}</p>
-                        <p className="text-xs text-text-muted mt-1">{selectedPlan?.name} • Annual Billing</p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-xs text-text-muted">Inclusive of all taxes</p>
-                        <p className="text-xs text-text-muted">Secure payment via PhonePe/PayPal</p>
-                    </div>
-                </div>
-            </div>
-
-            <div className="space-y-6">
-                <div className="border border-border rounded-sm p-6 bg-white">
-                    <h3 className="font-medium text-text-primary mb-3 flex items-center gap-2"><Building2 className="w-4 h-4 text-primary-main" /> Clinic Details</h3>
-                    <div className="space-y-1 text-sm">
-                        <p><span className="text-text-muted">Clinic name:</span> {formData.clinicName || '—'}</p>
-                        <p><span className="text-text-muted">Clinic type:</span> {formData.clinicType === 'Other' ? formData.otherClinicType : formData.clinicType || '—'}</p>
-                    </div>
-                </div>
-
-                {formData.doctors.length > 0 && (
-                    <div className="border border-border rounded-sm p-6 bg-white">
-                        <h3 className="font-medium text-text-primary mb-3 flex items-center gap-2"><Stethoscope className="w-4 h-4 text-primary-main" /> Doctors ({formData.doctors.length})</h3>
-                        <div className="space-y-3">
-                            {formData.doctors.map((doc, idx) => (
-                                <div key={idx} className="border-b border-border last:border-0 pb-2 last:pb-0">
-                                    <p className="font-medium text-text-primary">{doc.doctorName || '—'}</p>
-                                    <p className="text-sm text-text-muted">{doc.doctorSpecialty || '—'} • {doc.doctorPhone || '—'}</p>
-                                </div>
-                            ))}
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 text-white text-xs font-bold uppercase tracking-widest mb-4">
+                            <CreditCard className="w-4 h-4" /> Order Summary
                         </div>
+                        <h3 className="font-serif text-3xl mb-1">{selectedPlan?.name}</h3>
+                        <p className="text-[#AEC2BA]">Monthly Billing Cycle</p>
                     </div>
-                )}
-
-                <div className="border border-border rounded-sm p-6 bg-white">
-                    <h3 className="font-medium text-text-primary mb-3 flex items-center gap-2"><Briefcase className="w-4 h-4 text-primary-main" /> Business Details</h3>
-                    <div className="space-y-1 text-sm">
-                        <p><span className="text-text-muted">Business name:</span> {formData.businessName || '—'}</p>
-                        <p><span className="text-text-muted">Contact:</span> {formData.businessPhone || '—'} • {formData.businessEmail || '—'}</p>
-                        <p><span className="text-text-muted">Address:</span> {formData.businessAddress || '—'}</p>
-                        <p><span className="text-text-muted">Proof type:</span> {formData.businessProofType || '—'}</p>
+                    <div className="text-left md:text-right">
+                        <p className="text-sm text-[#AEC2BA] mb-1">Total Subscription Amount</p>
+                        <p className="text-4xl font-serif">₹{planPrice}</p>
+                        <p className="text-xs text-[#AEC2BA] mt-2">Inclusive of all taxes</p>
                     </div>
-                </div>
-
-                <div className="border border-border rounded-sm p-6 bg-white">
-                    <h3 className="font-medium text-text-primary mb-3 flex items-center gap-2"><Shield className="w-4 h-4 text-primary-main" /> Clinic Verification</h3>
-                    <p className="text-sm"><span className="text-text-muted">Document type:</span> {formData.clinicProofType || '—'}</p>
-                    <p className="text-xs text-text-muted mt-1">Document uploaded: {clinicProofFile ? clinicProofFile.name : '—'}</p>
                 </div>
             </div>
 
-            {serverMessage && (
-                <div className="mt-6 p-4 bg-red-50 border border-red-200 text-red-600 text-sm flex items-start gap-2 rounded-sm">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    {serverMessage}
+            <div className="grid md:grid-cols-2 gap-8 mb-8">
+                <div className="bg-white border border-[#E2E8E4] p-8 shadow-sm h-full">
+                    <h3 className="font-serif text-2xl text-[#1C2321] mb-6 border-b border-[#E2E8E4] pb-4 flex items-center gap-3">
+                        <Building2 className="text-[#2B5B4D] w-6 h-6" /> Clinic Details
+                    </h3>
+                    <div className="space-y-4 text-[15px] text-[#4A5552]">
+                        <p><strong className="text-[#1C2321] font-medium">Clinic name:</strong><br/>{formData.clinicName || '—'}</p>
+                        <p><strong className="text-[#1C2321] font-medium">Clinic type:</strong><br/>{formData.clinicType === 'Other' ? formData.otherClinicType : formData.clinicType || '—'}</p>
+                    </div>
+                </div>
+
+                <div className="bg-white border border-[#E2E8E4] p-8 shadow-sm h-full">
+                    <h3 className="font-serif text-2xl text-[#1C2321] mb-6 border-b border-[#E2E8E4] pb-4 flex items-center gap-3">
+                        <Briefcase className="text-[#2B5B4D] w-6 h-6" /> Business Details
+                    </h3>
+                    <div className="space-y-4 text-[15px] text-[#4A5552]">
+                        <p><strong className="text-[#1C2321] font-medium">Business entity:</strong><br/>{formData.businessName || '—'}</p>
+                        <p><strong className="text-[#1C2321] font-medium">Contact:</strong><br/>{formData.businessPhone || '—'} <br/> {formData.businessEmail || '—'}</p>
+                        <p><strong className="text-[#1C2321] font-medium">Address:</strong><br/>{formData.businessAddress || '—'}</p>
+                        <p><strong className="text-[#1C2321] font-medium">Proof provided:</strong><br/>{formData.businessProofType || '—'} & {formData.clinicProofType || '—'}</p>
+                    </div>
+                </div>
+            </div>
+
+            {formData.doctors.length > 0 && (
+                <div className="bg-white border border-[#E2E8E4] p-8 shadow-sm mb-8">
+                    <h3 className="font-serif text-2xl text-[#1C2321] mb-6 border-b border-[#E2E8E4] pb-4 flex items-center gap-3">
+                        <Stethoscope className="text-[#2B5B4D] w-6 h-6" /> Practitioners ({formData.doctors.length})
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {formData.doctors.map((doc, idx) => (
+                            <div key={idx} className="p-4 border border-[#E2E8E4] bg-[#F9F8F6]">
+                                <p className="font-serif text-xl text-[#1C2321] mb-1">{doc.doctorName || '—'}</p>
+                                <p className="text-sm text-[#4A5552]">{doc.doctorSpecialty || '—'}</p>
+                                <p className="text-sm text-[#73807B] mt-2">{doc.doctorPhone || '—'}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
-            <div className="flex justify-between mt-8">
-                <button onClick={prevStep} className="px-6 py-3 text-text-secondary hover:text-primary-main transition-colors flex items-center gap-2">← Back</button>
-                <button onClick={nextStep} className="bg-primary-main hover:bg-primary-dark text-white px-8 py-3 font-medium transition-all rounded-sm flex items-center gap-2">
-                    Continue to Account Setup <ArrowRight className="w-4 h-4" />
+            {serverMessage && (
+                <div className="mt-8 p-6 bg-red-50 border border-red-200 text-red-600 flex items-start gap-3">
+                    <X className="w-6 h-6 flex-shrink-0" />
+                    <p className="font-medium">{serverMessage}</p>
+                </div>
+            )}
+
+            <div className="flex justify-between items-center mt-12 pt-8 border-t border-[#E2E8E4]">
+                <button onClick={prevStep} className="px-6 py-4 text-[#4A5552] font-medium hover:text-[#1C2321] transition-colors flex items-center gap-2">← Back</button>
+                <button onClick={nextStep} className="bg-[#1C2321] text-white px-8 py-4 font-medium hover:bg-[#2B5B4D] transition-colors flex items-center gap-2">
+                    Continue to Account Setup <ArrowRight size={18} />
                 </button>
             </div>
         </div>
@@ -864,17 +864,21 @@ export default function MedeskOnboarding() {
     const renderAccountSetup = () => {
         if (submitSuccess) {
             return (
-                <div className="max-w-2xl mx-auto text-center">
-                    <div className="border border-green-200 bg-green-50 p-8 rounded-sm">
-                        <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                        <h2 className="text-2xl font-serif text-text-primary mb-2">Payment Initiated!</h2>
-                        <p className="text-text-secondary">Your order has been created. Complete payment to activate your account.</p>
-                        <div className="mt-6 text-left">
-                            <h3 className="font-medium text-text-primary mb-3">Next Steps:</h3>
-                            <ul className="space-y-2">
+                <div className="max-w-2xl mx-auto text-center py-12">
+                    <div className="bg-white border border-[#E2E8E4] p-12 shadow-sm">
+                        <div className="w-20 h-20 bg-[#2B5B4D] rounded-full flex items-center justify-center mx-auto mb-8">
+                            <CheckCircle2 className="w-10 h-10 text-white" />
+                        </div>
+                        <h2 className="font-serif text-4xl text-[#1C2321] mb-4">Payment Initiated!</h2>
+                        <p className="text-lg text-[#4A5552] font-light mb-10 leading-relaxed">Your order has been created. Complete payment to activate your command center.</p>
+
+                        <div className="bg-[#F9F8F6] border border-[#E2E8E4] p-8 text-left">
+                            <h3 className="font-medium text-[#1C2321] tracking-wide uppercase text-sm mb-6">Next Steps</h3>
+                            <ul className="space-y-4">
                                 {ONBOARDING_CONFIG.post_submission.next_steps.map((step, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-sm text-text-secondary">
-                                        <Check className="w-4 h-4 text-green-600 mt-0.5" /> {step}
+                                    <li key={i} className="flex items-start gap-4 text-[#4A5552]">
+                                        <div className="mt-1 bg-[#AEC2BA]/30 p-1 rounded-full"><Check className="w-3 h-3 text-[#2B5B4D]" /></div>
+                                        {step}
                                     </li>
                                 ))}
                             </ul>
@@ -885,63 +889,58 @@ export default function MedeskOnboarding() {
         }
 
         return (
-            <div className="max-w-2xl mx-auto">
-                <div className="text-center mb-10">
-                    <div className="inline-flex p-3 bg-primary-light/20 rounded-full mb-4">
-                        <Lock className="w-6 h-6 text-primary-main" />
-                    </div>
-                    <h2 className="text-3xl md:text-4xl font-serif text-text-primary mb-2">Create Your Account</h2>
-                    <p className="text-text-secondary">Set up your credentials to access the dashboard</p>
-                </div>
+            <div className="max-w-3xl mx-auto">
+                <SectionHeader icon={Lock} title="Create Your Account" subtitle="Establish the master credentials for your clinic's dashboard." />
 
-                <div className="border border-border rounded-sm p-8 bg-white">
-                    <div className="space-y-6">
+                <div className="bg-white border border-[#E2E8E4] p-8 md:p-12 shadow-sm">
+                    <div className="space-y-8">
                         <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">Full Name <span className="text-red-500">*</span></label>
-                            <input type="text" className={`w-full px-4 py-3 bg-background-subtle border ${errors.accountName ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm`} value={accountName} onChange={e => setAccountName(e.target.value)} placeholder="Your full name" />
-                            {errors.accountName && <p className="text-red-500 text-xs mt-1">{errors.accountName}</p>}
+                            <label className="block text-sm font-medium text-[#1C2321] mb-2">Administrator Full Name <span className="text-red-500">*</span></label>
+                            <input type="text" className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors ${errors.accountName ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={accountName} onChange={e => setAccountName(e.target.value)} placeholder="Your full name" />
+                            {errors.accountName && <p className="text-red-500 text-xs mt-2">{errors.accountName}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">Password <span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium text-[#1C2321] mb-2">Master Password <span className="text-red-500">*</span></label>
                             <div className="relative">
-                                <input type={showPassword ? "text" : "password"} className={`w-full px-4 py-3 bg-background-subtle border ${errors.accountPassword ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm pr-12`} value={accountPassword} onChange={e => setAccountPassword(e.target.value)} placeholder="Create a strong password" />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary-main">
-                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                <input type={showPassword ? "text" : "password"} className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors pr-14 ${errors.accountPassword ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={accountPassword} onChange={e => setAccountPassword(e.target.value)} placeholder="Create a formidable password" />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#73807B] hover:text-[#1C2321] transition-colors p-2">
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
                             </div>
+
                             {accountPassword && (
-                                <div className="mt-2">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-xs text-text-muted">Password Strength</span>
-                                        <span className="text-xs font-medium" style={{ color: strengthInfo.color }}>{strengthInfo.label}</span>
+                                <div className="mt-4 bg-[#F9F8F6] p-4 border border-[#E2E8E4]">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-xs uppercase tracking-widest font-bold text-[#4A5552]">Security Strength</span>
+                                        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: strengthInfo.color }}>{strengthInfo.label}</span>
                                     </div>
-                                    <div className="h-1 w-full bg-border rounded-full overflow-hidden">
-                                        <div className="h-full transition-all duration-300 rounded-full" style={{ width: `${(passwordStrength + 1) * 20}%`, backgroundColor: strengthInfo.color }} />
+                                    <div className="h-1.5 w-full bg-[#E2E8E4] overflow-hidden">
+                                        <div className="h-full transition-all duration-300" style={{ width: `${(passwordStrength + 1) * 20}%`, backgroundColor: strengthInfo.color }} />
                                     </div>
-                                    <p className="text-xs text-text-muted mt-2">Use at least 8 characters with uppercase, numbers, and special characters</p>
+                                    <p className="text-[11px] text-[#73807B] mt-3 uppercase tracking-wider">Use at least 8 characters with uppercase, numbers, and symbols.</p>
                                 </div>
                             )}
-                            {errors.accountPassword && <p className="text-red-500 text-xs mt-1">{errors.accountPassword}</p>}
+                            {errors.accountPassword && <p className="text-red-500 text-xs mt-2">{errors.accountPassword}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">Confirm Password <span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium text-[#1C2321] mb-2">Confirm Master Password <span className="text-red-500">*</span></label>
                             <div className="relative">
-                                <input type={showConfirmPassword ? "text" : "password"} className={`w-full px-4 py-3 bg-background-subtle border ${errors.confirmPassword ? 'border-red-500' : 'border-border'} focus:outline-none focus:border-primary-main transition-all rounded-sm pr-12`} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Confirm your password" />
-                                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary-main">
-                                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                <input type={showConfirmPassword ? "text" : "password"} className={`w-full border p-4 bg-[#F9F8F6] focus:outline-none transition-colors pr-14 ${errors.confirmPassword ? 'border-red-500' : 'border-[#E2E8E4] focus:border-[#2B5B4D]'}`} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Verify your password" />
+                                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#73807B] hover:text-[#1C2321] transition-colors p-2">
+                                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
                             </div>
-                            {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
+                            {errors.confirmPassword && <p className="text-red-500 text-xs mt-2">{errors.confirmPassword}</p>}
                         </div>
                     </div>
                 </div>
 
-                <div className="flex justify-between mt-8">
-                    <button onClick={prevStep} className="px-6 py-3 text-text-secondary hover:text-primary-main transition-colors flex items-center gap-2">← Back to Review</button>
-                    <button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary-main hover:bg-primary-dark text-white px-8 py-3 font-medium transition-all rounded-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                <div className="flex justify-between items-center mt-12 pt-8 border-t border-[#E2E8E4]">
+                    <button onClick={prevStep} className="px-6 py-4 text-[#4A5552] font-medium hover:text-[#1C2321] transition-colors flex items-center gap-2">← Back to Review</button>
+                    <button onClick={handleSubmit} disabled={isSubmitting} className="bg-[#2B5B4D] text-white px-8 py-4 font-medium hover:bg-[#1f4439] transition-colors flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
                         {isSubmitting ? "Processing..." : `Pay ₹${planPrice} & Activate`}
                     </button>
                 </div>
@@ -960,14 +959,20 @@ export default function MedeskOnboarding() {
     };
 
     return (
-        <div className="min-h-screen bg-background-base">
-            <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="min-h-screen bg-[#F9F8F6] text-[#1C2321] font-sans selection:bg-[#2B5B4D] selection:text-white flex flex-col">
+            <div className="pt-16 pb-8 text-center">
+                <BrandLogo theme="dark" className="opacity-80 scale-90 mb-6" />
+            </div>
+
+            <main className="flex-grow max-w-7xl mx-auto px-6 w-full pb-24">
                 <StepIndicator currentStep={currentStep} steps={steps} setStep={setCurrentStep} />
                 {stepComponents[currentStep]()}
-            </div>
-            <footer className="py-8 border-t border-border bg-background-subtle">
-                <div className="max-w-6xl mx-auto px-6 text-center text-sm text-text-muted">
-                    <p>© 2024 Medesk. Secure healthcare practice management.</p>
+            </main>
+
+            <footer className="py-8 border-t border-[#E2E8E4] bg-white mt-auto">
+                <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between text-xs text-[#73807B]">
+                    <p>© {new Date().getFullYear()} MeDesk by SilkBinary. All rights reserved.</p>
+                    <p className="mt-2 md:mt-0 uppercase tracking-widest font-bold">MEDESK</p>
                 </div>
             </footer>
         </div>

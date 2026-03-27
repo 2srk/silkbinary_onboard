@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Server, Globe, Cpu, HardDrive, Sparkles } from 'lucide-react';
+import { Server, Globe, Cpu, HardDrive, Sparkles, Activity, ArrowRight } from 'lucide-react';
 import WebDesign from './WebDesign';
 import Hosting from './Hosting';
 import VPS from './vps';
@@ -13,7 +13,7 @@ import SaasRouter from './saas/saas.jsx';
 // Custom Styles Injection (shared across all services)
 export const CustomStyles = () => (
     <style dangerouslySetInnerHTML={{__html: `
-    @frames slideLeft {
+    @keyframes slideLeft {
       0% { transform: translateX(20px); opacity: 0; }
       100% { transform: translateX(0); opacity: 1; }
     }
@@ -50,6 +50,19 @@ export const CustomStyles = () => (
     .theme-preview-neon { background: #000000; color: #39ff14; border-color: #ff00ff; box-shadow: inset 0 0 10px rgba(255,0,255,0.2); }
     .theme-preview-neon .accent { background: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
     .theme-preview-minimalist { background: #f4f4f0; color: #333333; border-color: #d6d3d1; }
+    
+    /* Medesk Beautiful & Poppy Background */
+    .bg-medesk-poppy {
+      /* Base Color */
+      background-color: #2B5B4D; 
+      /* Clean, Beautiful, "Little Poppy" Mesh Gradient (Natural Aurora) */
+      background-image: 
+        radial-gradient(at 10% 10%, #3D7A68 0px, transparent 50%),
+        radial-gradient(at 90% 20%, #AEC2BA 0px, transparent 50%),
+        radial-gradient(at 50% 50%, #1f4439 0px, transparent 50%),
+        radial-gradient(at 20% 80%, #2B5B4D 0px, transparent 50%),
+        radial-gradient(at 80% 90%, rgba(249, 248, 246, 0.1) 0px, transparent 50%);
+    }
   `}} />
 );
 
@@ -176,7 +189,8 @@ const ServiceSelection = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                {/* Main Infrastructure & Design Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-12">
                     {services.map((service) => {
                         const Icon = service.icon;
                         return (
@@ -224,6 +238,48 @@ ${service.unavailable
                             </Link>
                         );
                     })}
+                </div>
+
+                {/* Medesk Special Banner - Beautiful & Poppy Background */}
+                <div className="w-full">
+                    <Link
+                        to="/saas/medesk"
+                        className="group relative flex flex-col md:flex-row items-center justify-between bg-medesk-poppy text-[#F9F8F6] p-8 md:p-12 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border border-[#1f4439]"
+                    >
+                        {/* Background bespoke organic growth pattern overlay */}
+                        <div className="absolute inset-0 opacity-10 pointer-events-none">
+                            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <pattern id="organic_growth" patternUnits="userSpaceOnUse" width="120" height="120" patternTransform="rotate(15)">
+                                        <path d="M60 10 C 65 30, 80 40, 90 40 S 110 30, 115 10 M10 60 C 30 65, 40 80, 40 90 S 30 110, 10 115 M60 110 C 55 90, 40 80, 30 80 S 10 90, 5 110 M110 60 C 90 55, 80 40, 80 30 S 90 10, 110 5" stroke="#F9F8F6" strokeWidth="0.5" fill="none" opacity="0.8"/>
+                                        <path d="M30 30 a 5 5 0 1 0 10 0 a 5 5 0 1 0 -10 0 M90 90 a 5 5 0 1 0 10 0 a 5 5 0 1 0 -10 0" fill="#F9F8F6" opacity="0.5"/>
+                                    </pattern>
+                                </defs>
+                                <rect width="100%" height="100%" fill="url(#organic_growth)" />
+                            </svg>
+                        </div>
+
+                        <div className="flex items-center gap-6 relative z-10 w-full md:w-auto mb-6 md:mb-0">
+                            <div className="w-16 h-16 bg-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-md border border-[#E2E8E4]">
+                                <Activity className="w-8 h-8 text-[#1C2321]" />
+                            </div>
+                            <div>
+                                <div className="inline-flex items-center gap-2 px-2 py-0.5 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest mb-2 border border-white/20">
+                                    SaaS Product
+                                </div>
+                                <h2 className="font-serif text-3xl md:text-4xl tracking-tight text-white mb-2 leading-none">MeDesk</h2>
+                                <p className="text-[#AEC2BA] text-sm md:text-base max-w-lg font-light leading-relaxed">
+                                    Precise, beautiful, and reliable clinic management. Designed to reduce doctor burnout and delight your patients.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="relative z-10 w-full md:w-auto flex justify-end">
+                            <div className="bg-[#1C2321] text-white px-8 py-4 font-medium flex items-center gap-3 border border-[#3D7A68] group-hover:bg-[#F9F8F6] group-hover:text-[#1C2321] group-hover:border-[#F9F8F6] transition-colors shadow-lg">
+                                Explore MeDesk <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </div>
+                    </Link>
                 </div>
             </main>
 
