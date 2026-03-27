@@ -69,15 +69,17 @@ const Header = ({ currency, setCurrency }) => {
     const isRoot = location.pathname === '/';
     const isPaymentPage = location.pathname.includes('/payment/');
     const isDadPage = location.pathname === '/dad'; // Add check for dad page
+    const isMedeskPage = location.pathname === '/saas/medesk'; // Add check for dad page
+
 
     // Show currency toggle for ALL services except dad and payment pages
-    const showCurrencyToggle = !isRoot && !isPaymentPage && !isDadPage;
+    const showCurrencyToggle = !isRoot && !isPaymentPage && !isDadPage &&!isMedeskPage;
 
     return (
         <header className="sticky top-0 z-50 bg-white border-b border-gray-200 py-4 px-6 md:px-12 flex flex-wrap justify-between items-center">
             <div className="flex items-center gap-3">
                 <a href="https://silkbinary.com">
-                    <img src="logo.svg" alt="Logo" className="h-8 w-auto" />
+                    <img src="/logo.svg" alt="Logo" className="h-8 w-auto" />
                 </a>
                 {!isRoot && !isPaymentPage && !isDadPage && (
                     <Link
